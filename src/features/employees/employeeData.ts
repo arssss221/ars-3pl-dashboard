@@ -75,6 +75,38 @@ export const getSelfieUrl = (seed: EmployeeSeed) => {
   return buildPlaceholderImage(initials, { bg: '#d1fae5', fg: '#065f46' });
 };
 
+export const isArabicLanguage = (language?: string) =>
+  (language ?? document.documentElement.lang).toLowerCase().startsWith('ar');
+
+export const getEmployeeDisplayName = (
+  employee: Pick<EmployeeSeed, 'arabicName' | 'fullName'>,
+  language?: string
+) => {
+  if (isArabicLanguage(language) && employee.arabicName.trim()) {
+    return employee.arabicName;
+  }
+  return employee.fullName;
+};
+
+export const getEmployeeInitials = (
+  employee: Pick<EmployeeSeed, 'arabicName' | 'fullName'>,
+  language?: string
+) => {
+  const displayName = getEmployeeDisplayName(employee, language);
+  if (isArabicLanguage(language)) {
+    return displayName.trim().charAt(0) || 'م';
+  }
+
+  return (
+    displayName
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('') || 'EM'
+  );
+};
+
 export const employeeSeeds: EmployeeSeed[] = [
   {
     id: 1,

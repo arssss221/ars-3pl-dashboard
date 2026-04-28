@@ -1,6 +1,7 @@
 // src/features/employees/Employees.tsx
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Phone,
   MessageCircle,
@@ -19,6 +20,8 @@ import {
 } from 'lucide-react';
 import {
   employeeSeeds,
+  getEmployeeDisplayName,
+  getEmployeeInitials,
   getSelfieUrl,
   type CompletionStatus,
   type EmployeeDocuments,
@@ -154,7 +157,10 @@ const IssueButton = ({ title, issues, type }: IssueButtonProps) => {
           <FileText size={14} />
         )}
       </button>
-      <div className="hidden group-hover/issue:block absolute right-0 top-full mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-lg p-2 z-30">
+      <div
+        style={{ insetInlineEnd: 0 }}
+        className="ars-floating-menu hidden group-hover/issue:block absolute top-full mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-lg p-2 z-30"
+      >
         <p className="text-[11px] font-semibold text-slate-600 mb-1">{title}</p>
         <ul className="space-y-1">
           {issues.map((issue) => (
@@ -170,10 +176,18 @@ const IssueButton = ({ title, issues, type }: IssueButtonProps) => {
 
 export default function Employees() {
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
   const [activeFilter, setActiveFilter] = useState<FilterKey>('All');
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [openSort, setOpenSort] = useState(false);
   const [sortBy, setSortBy] = useState<SortKey>('iqamaExpiry');
+
+  useEffect(() => {
+    if (openMenuId === null) return;
+    const closeMenu = () => setOpenMenuId(null);
+    window.addEventListener('click', closeMenu);
+    return () => window.removeEventListener('click', closeMenu);
+  }, [openMenuId]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<EmployeeStatus, number> = {
@@ -242,16 +256,16 @@ export default function Employees() {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm border-b border-slate-200">
-        <div className="flex items-center justify-between gap-3 px-4 py-2">
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+    <div className="ars-page h-full flex flex-col">
+      <div className="sticky top-0 z-10 px-3 py-3 md:px-4">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <div className="order-2 flex items-center gap-2 overflow-x-auto scrollbar-hide ars-toolbar-dock xl:order-2">
             <button
               onClick={() => setActiveFilter('All')}
-              className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+              className={`ars-filter-pill shrink-0 transition-all ${
                 activeFilter === 'All'
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  ? 'ars-filter-pill-active'
+                  : ''
               }`}
             >
               All ({employeeSeeds.length})
@@ -261,10 +275,10 @@ export default function Employees() {
               <button
                 key={status}
                 onClick={() => setActiveFilter(status)}
-                className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+                className={`ars-filter-pill shrink-0 transition-all ${
                   activeFilter === status
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                    ? 'ars-filter-pill-active'
+                    : ''
                 }`}
               >
                 {status} ({statusCounts[status]})
@@ -272,20 +286,23 @@ export default function Employees() {
             ))}
           </div>
 
-          <div className="flex items-center gap-2">
-            <button className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 shadow-sm">
-              <UserPlus size={16} /> Add
+          <div className="order-1 flex items-center gap-3 xl:order-1">
+            <button className="ars-primary-button shrink-0 rounded-xl px-3.5 py-2 text-sm font-black flex items-center gap-1.5">
+              <UserPlus size={17} /> Add
             </button>
 
             <div className="relative">
               <button
                 onClick={() => setOpenSort((prev) => !prev)}
-                className="shrink-0 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5"
+                className="ars-glass-button shrink-0 rounded-xl px-3.5 py-2 text-sm font-black flex items-center gap-1.5 hover:text-emerald-700"
               >
-                <ArrowUpDown size={14} /> Sort
+                <ArrowUpDown size={17} /> Sort
               </button>
               {openSort && (
-                <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-30">
+                <div
+                  style={{ insetInlineEnd: 0 }}
+                  className="ars-floating-menu absolute mt-3 w-56 rounded-2xl shadow-lg border border-slate-100 py-2 z-30"
+                >
                   {sortOptions.map((option) => (
                     <button
                       key={option.key}
@@ -309,58 +326,59 @@ export default function Employees() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+      <div className="flex-1 overflow-auto px-3 pb-4 md:px-4">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(330px,1fr))] gap-3">
           {filteredAndSorted.map((emp) => {
             const notificationIssues = getNotificationIssues(emp);
             const paperIssues = getPaperIssues(emp);
             const selfieUrl = getSelfieUrl(emp);
+            const displayName = getEmployeeDisplayName(emp, i18n.language);
 
             return (
               <div
                 key={emp.id}
                 onClick={() => openDetails(emp.id)}
-                className={`bg-white rounded-xl border p-2.5 transition-all hover:shadow-md cursor-pointer relative ${statusCardAura[emp.status]}`}
+                className={`ars-list-card min-h-[126px] p-3 cursor-pointer relative ${statusCardAura[emp.status]}`}
               >
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-3">
                   <div className="relative shrink-0">
                     {selfieUrl ? (
                       <img
                         src={selfieUrl}
-                        alt={emp.fullName}
-                        className="h-10 w-10 rounded-full object-cover border border-emerald-200"
+                        alt={displayName}
+                        className="ars-avatar-ring h-12 w-12 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-base shadow-sm">
-                        {emp.fullName.charAt(0).toUpperCase()}
+                      <div className="ars-avatar-ring h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-black text-sm">
+                        {getEmployeeInitials(emp, i18n.language)}
                       </div>
                     )}
                     {emp.status === 'Working' ? (
                       <BadgeCheck
-                        size={12}
-                        className="absolute -bottom-0.5 -right-0.5 text-emerald-500 bg-white rounded-full"
+                        size={17}
+                        className="absolute bottom-0 right-0 text-emerald-500 bg-slate-950 rounded-full"
                       />
                     ) : (
                       <XCircle
-                        size={12}
-                        className="absolute -bottom-0.5 -right-0.5 text-red-400 bg-white rounded-full"
+                        size={17}
+                        className="absolute bottom-0 right-0 text-red-400 bg-slate-950 rounded-full"
                       />
                     )}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <h3
-                      className="font-semibold text-slate-800 text-sm truncate"
+                      className="font-black text-slate-900 text-base leading-tight truncate"
                       onClick={() => openDetails(emp.id)}
                     >
-                      {emp.fullName}
+                      {displayName}
                     </h3>
-                    <p className="text-[11px] text-slate-500 truncate">
+                    <p className="text-xs font-semibold text-slate-500 truncate">
                       {emp.occupationVisa}
                     </p>
                   </div>
 
-                  <div className="relative flex items-center gap-1">
+                  <div className="relative flex items-center gap-2">
                     <IssueButton
                       title="Notifications"
                       issues={notificationIssues}
@@ -373,13 +391,17 @@ export default function Employees() {
                         e.stopPropagation();
                         setOpenMenuId(openMenuId === emp.id ? null : emp.id);
                       }}
-                      className="p-1 hover:bg-slate-100 rounded-full"
+                      className="ars-header-icon h-8 min-w-8 text-slate-400 hover:text-emerald-600"
                     >
-                      <MoreVertical size={14} className="text-slate-400" />
+                      <MoreVertical size={16} />
                     </button>
 
                     {openMenuId === emp.id && (
-                      <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-20">
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ insetInlineEnd: 0 }}
+                        className="ars-floating-menu absolute top-full mt-2 w-60 rounded-2xl shadow-lg border border-slate-100 py-2 z-20"
+                      >
                         <div className="px-3 py-1.5 text-[11px] font-medium text-slate-500 border-b">
                           Detail Snapshot
                         </div>
@@ -406,20 +428,20 @@ export default function Employees() {
                   </div>
                 </div>
 
-                <div className="mt-2 flex gap-2">
+                <div className="mt-4 grid grid-cols-2 gap-2">
                   <button
                     onClick={(e) => handleCall(emp.phoneNo, e)}
-                    className="flex-1 flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-700 py-1.5 rounded-full transition-colors"
+                    className="ars-glass-button flex items-center justify-center text-slate-600 py-2 rounded-full transition-colors hover:text-emerald-700"
                     aria-label="Call"
                   >
-                    <Phone size={14} />
+                    <Phone size={18} />
                   </button>
                   <button
-                    onClick={(e) => handleWhatsApp(emp.phoneNo, emp.fullName, e)}
-                    className="flex-1 flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-1.5 rounded-full transition-colors"
+                    onClick={(e) => handleWhatsApp(emp.phoneNo, displayName, e)}
+                    className="flex items-center justify-center bg-emerald-50/70 hover:bg-emerald-100 text-emerald-700 py-2 rounded-full transition-colors border border-emerald-100"
                     aria-label="WhatsApp"
                   >
-                    <MessageCircle size={14} />
+                    <MessageCircle size={18} />
                   </button>
                 </div>
               </div>
@@ -428,7 +450,7 @@ export default function Employees() {
         </div>
 
         {filteredAndSorted.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-xl">
+          <div className="ars-card text-center py-8 rounded-2xl">
             <p className="text-slate-400 text-sm">No employees found</p>
           </div>
         )}

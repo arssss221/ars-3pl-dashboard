@@ -1,6 +1,7 @@
 // src/features/employees/EmployeeDetail.tsx
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Phone,
   MessageCircle,
@@ -21,6 +22,8 @@ import {
   PLACEHOLDER_PDF_URL,
   buildPlaceholderImage,
   employeeSeeds,
+  getEmployeeDisplayName,
+  getEmployeeInitials,
   getEmployeeSeedById,
   getSelfieUrl,
   type EmployeeSeed,
@@ -768,12 +771,15 @@ const StatusDropdown = ({ current, onChange }: StatusDropdownProps) => {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${statusColors[current]} bg-opacity-90`}
+        className={`ars-status-dropdown-trigger px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${statusColors[current]}`}
       >
         {current} <ChevronDown size={10} />
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-10 min-w-[110px]">
+        <div
+          style={{ insetInlineEnd: 0 }}
+          className="ars-floating-menu absolute mt-2 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-10 min-w-[110px]"
+        >
           {statusOptions.map((opt) => (
             <button
               key={opt}
@@ -878,6 +884,7 @@ const AttachmentGrid = ({
 
 export default function EmployeeDetail() {
   const { id } = useParams();
+  const { i18n } = useTranslation();
   const selectedSeed = useMemo(() => {
     const parsedId = Number(id);
     if (!Number.isFinite(parsedId)) return fallbackEmployeeSeed;
@@ -1362,13 +1369,19 @@ export default function EmployeeDetail() {
       : newDocumentType === 'image'
         ? 'image/*'
         : 'image/*,application/pdf';
+  const isArabicMode = i18n.language.startsWith('ar');
+  const nameField = isArabicMode ? 'arabicName' : 'fullName';
+  const displayName = getEmployeeDisplayName(emp, i18n.language);
+  const detailNameLabel = isArabicMode ? 'Full Name' : 'Arabic Name';
+  const detailNameField = isArabicMode ? 'fullName' : 'arabicName';
+  const detailNameValue = isArabicMode ? emp.fullName : emp.arabicName;
 
   return (
     <div className="h-full flex flex-col bg-slate-50">
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5 pb-8">
         {/* Profile Card */}
         <div
-          className={`bg-gradient-to-r ${currentHeaderTheme.gradient} rounded-2xl shadow-lg overflow-hidden transition-colors duration-300`}
+          className={`ars-profile-hero bg-gradient-to-r ${currentHeaderTheme.gradient} rounded-2xl shadow-lg overflow-hidden transition-colors duration-300`}
         >
           <div className="p-5 sm:p-6">
             <div className="flex justify-end mb-4">
@@ -1388,13 +1401,13 @@ export default function EmployeeDetail() {
                       />
                     ) : (
                       <div className="h-24 w-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-3xl border-4 border-white/50 shadow-md">
-                        {emp.fullName.charAt(0).toUpperCase()}
+                        {getEmployeeInitials(emp, i18n.language)}
                       </div>
                     )}
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    {editField === 'fullName' ? (
+                    {editField === nameField ? (
                       <div className="space-y-2">
                         <input
                           type="text"
@@ -1405,7 +1418,7 @@ export default function EmployeeDetail() {
                         />
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleSave('fullName')}
+                            onClick={() => handleSave(nameField)}
                             className="px-2.5 py-1 text-xs font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-400"
                           >
                             Save
@@ -1422,22 +1435,22 @@ export default function EmployeeDetail() {
                       <div className="group rounded-lg p-1 -m-1 hover:bg-white/10 transition-colors">
                         <div className="flex items-start justify-between gap-2">
                           <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight break-words">
-                            {emp.fullName}
+                            {displayName}
                           </h2>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
-                              onClick={() => handleEdit('fullName', emp.fullName)}
+                              onClick={() => handleEdit(nameField, displayName)}
                               className="p-1 rounded-full hover:bg-white/20 text-white"
                               title="Edit"
                             >
                               <Edit2 size={13} />
                             </button>
                             <button
-                              onClick={() => handleCopy(emp.fullName, 'fullName')}
+                              onClick={() => handleCopy(displayName, nameField)}
                               className="p-1 rounded-full hover:bg-white/20 text-white"
                               title="Copy"
                             >
-                              {copiedField === 'fullName' ? (
+                              {copiedField === nameField ? (
                                 <Check size={13} />
                               ) : (
                                 <Copy size={13} />
@@ -1594,7 +1607,7 @@ export default function EmployeeDetail() {
                   field="phoneNo"
                   label="Phone 1"
                   phone={emp.phoneNo}
-                  employeeName={emp.fullName}
+                  employeeName={displayName}
                   mutedTextClass={currentHeaderTheme.softText}
                   editField={editField}
                   editValue={editValue}
@@ -1609,7 +1622,7 @@ export default function EmployeeDetail() {
                   field="phoneNo2"
                   label="Phone 2"
                   phone={emp.phoneNo2}
-                  employeeName={emp.fullName}
+                  employeeName={displayName}
                   mutedTextClass={currentHeaderTheme.softText}
                   editField={editField}
                   editValue={editValue}
@@ -1851,9 +1864,9 @@ export default function EmployeeDetail() {
           <div className="p-5">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
               <EditableField
-                label="Arabic Name"
-                field="arabicName"
-                value={emp.arabicName}
+                label={detailNameLabel}
+                field={detailNameField}
+                value={detailNameValue}
                 isCopyable={false}
                 {...{
                   editField,

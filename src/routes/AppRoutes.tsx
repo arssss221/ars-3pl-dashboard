@@ -12,6 +12,7 @@ import Unauthorized from '../features/auth/Unauthorized';
 import Dashboard from '../features/dashboard/Dashboard';
 import Employees from '../features/employees/Employees';
 import Transaction from '../features/transactions/Transaction';
+import PaidTransactions from '../features/transactions/PaidTransactions';
 import IDManager from '../features/id_manager/IDManager';
 
 // --- Profile & Settings (আপনার নতুন পাথ অনুযায়ী) ---
@@ -23,30 +24,65 @@ import Settings from '../features/profile/Settings';
 import OilChanges from '../features/vehicles/OilChanges';
 import Servicing from '../features/vehicles/Servicing';
 import Accidents from '../features/vehicles/Accidents';
+import Vehicles from '../features/vehicles/Vehicles';
+import VehicleDetail from '../features/vehicles/VehicleDetail';
 import EmployeeDetail from '../features/employees/EmployeeDetail';
 
+const getStoredUser = () => {
+  const sessionData = localStorage.getItem('userSession');
+  if (!sessionData) return null;
+
+  try {
+    return JSON.parse(sessionData);
+  } catch {
+    localStorage.removeItem('userSession');
+    return null;
+  }
+};
+
 export default function AppRoutes() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(() => getStoredUser());
+  const [loading, setLoading] = useState(() => !getStoredUser());
 
   useEffect(() => {
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+      setLoading(false);
+    }
+
+    const authFallback = window.setTimeout(() => {
+      setUser(getStoredUser());
+      setLoading(false);
+    }, 1800);
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      const sessionData = localStorage.getItem('userSession');
-      if (firebaseUser && sessionData) {
-        setUser(JSON.parse(sessionData));
+      window.clearTimeout(authFallback);
+      const latestStoredUser = getStoredUser();
+
+      if (firebaseUser && latestStoredUser) {
+        setUser(latestStoredUser);
       } else {
-        localStorage.removeItem('userSession');
-        setUser(null);
+        setUser(latestStoredUser);
       }
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    return () => {
+      window.clearTimeout(authFallback);
+      unsubscribe();
+    };
   }, []);
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+      <div className="flex h-screen items-center justify-center bg-slate-950">
+        <div className="text-center">
+          <div className="mx-auto h-14 w-14 animate-spin rounded-full border-4 border-emerald-400/20 border-b-emerald-400"></div>
+          <p className="mt-4 text-[11px] font-black uppercase tracking-[0.3em] text-emerald-200">
+            Loading ARS Control
+          </p>
+        </div>
       </div>
     );
   }
@@ -81,10 +117,11 @@ export default function AppRoutes() {
           {/* Vehicles Routes */}
           <Route element={<ProtectedRoute requiredPermission="vehicles" />}>
             <Route path="vehicles">
+              <Route index element={<Vehicles />} />
+              <Route path=":id" element={<VehicleDetail />} />
               <Route path="oil" element={<OilChanges />} />
               <Route path="servicing" element={<Servicing />} />
               <Route path="accidents" element={<Accidents />} />
-              <Route index element={<Navigate to="oil" replace />} />
             </Route>
           </Route>
 
@@ -95,7 +132,10 @@ export default function AppRoutes() {
 
           {/* Transaction Route */}
           <Route element={<ProtectedRoute requiredPermission="transaction" />}>
-            <Route path="transaction" element={<Transaction />} />
+            <Route path="transaction">
+              <Route index element={<Transaction />} />
+              <Route path="paid" element={<PaidTransactions />} />
+            </Route>
           </Route>
         </Route>
       </Routes>

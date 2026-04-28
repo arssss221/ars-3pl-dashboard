@@ -1,136 +1,180 @@
-{/*src/pages/vehicles/OilChanges.tsx*/}
-import { useState } from 'react';
-import { Search, Plus, Droplets, Calendar, Wrench, Eye } from 'lucide-react';
+import { useMemo } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { vehicleSeeds } from './vehicleData';
+import {
+  getVehiclePersonDisplayName,
+  getVehiclePersonSearchTokens,
+} from './vehiclePeople';
 
-interface OilRecord {
-  id: number;
-  vehicleNo: string;
-  oilType: string;
-  lastChange: string;
-  nextDue: string;
-  status: 'normal' | 'due' | 'overdue';
+type OilStatus = 'normal' | 'due' | 'overdue';
+
+interface LayoutContext {
+  searchTerm: string;
 }
 
+interface OilHistoryRecord {
+  id: number;
+  vehicleId: number;
+  changeDate: string;
+  recordedMileage: number;
+}
+
+const oilHistoryRecords: OilHistoryRecord[] = [
+  { id: 1, vehicleId: 1, changeDate: '2026-03-12', recordedMileage: 48250 },
+  { id: 2, vehicleId: 1, changeDate: '2025-12-01', recordedMileage: 43200 },
+  { id: 3, vehicleId: 2, changeDate: '2026-01-20', recordedMileage: 73640 },
+  { id: 4, vehicleId: 2, changeDate: '2025-10-18', recordedMileage: 70200 },
+  { id: 5, vehicleId: 3, changeDate: '2026-02-10', recordedMileage: 21480 },
+  { id: 6, vehicleId: 3, changeDate: '2025-11-20', recordedMileage: 19100 },
+  { id: 7, vehicleId: 4, changeDate: '2025-11-14', recordedMileage: 118900 },
+  { id: 8, vehicleId: 4, changeDate: '2025-08-02', recordedMileage: 113600 },
+];
+
+const statusStyles: Record<OilStatus, string> = {
+  normal: 'bg-emerald-100 text-emerald-700',
+  due: 'bg-yellow-100 text-yellow-700',
+  overdue: 'bg-red-100 text-red-700',
+};
+
+const formatDate = (dateStr: string) => {
+  const parsed = new Date(dateStr);
+  if (Number.isNaN(parsed.getTime())) return '-';
+  return parsed.toLocaleDateString('en-GB');
+};
+
+const getOilStatus = (
+  secondLastMileage: number,
+  interval: number,
+  latestMileage: number
+): OilStatus => {
+  const dueMileage = secondLastMileage + interval;
+  const normalLimit = dueMileage + 300;
+
+  if (latestMileage < dueMileage) return 'due';
+  if (latestMileage <= normalLimit) return 'normal';
+  return 'overdue';
+};
+
 export default function OilChanges() {
-  const [search, setSearch] = useState('');
+  const outletContext = useOutletContext<LayoutContext | undefined>();
+  const { i18n } = useTranslation();
+  const searchTerm = outletContext?.searchTerm ?? '';
 
-  const records: OilRecord[] = [
-    {
-      id: 1,
-      vehicleNo: 'KA-01-1234',
-      oilType: 'Synthetic 5W-30',
-      lastChange: '2024-12-10',
-      nextDue: '2025-03-10',
-      status: 'normal',
-    },
-    {
-      id: 2,
-      vehicleNo: 'KA-02-5678',
-      oilType: 'Mineral 15W-40',
-      lastChange: '2024-11-20',
-      nextDue: '2025-02-20',
-      status: 'due',
-    },
-    {
-      id: 3,
-      vehicleNo: 'KA-03-9101',
-      oilType: 'Synthetic 10W-40',
-      lastChange: '2024-09-05',
-      nextDue: '2024-12-05',
-      status: 'overdue',
-    },
-  ];
+  const rows = useMemo(() => {
+    const searchValue = searchTerm.toLowerCase().trim();
 
-  const statusColor = {
-    normal: 'bg-emerald-100 text-emerald-700',
-    due: 'bg-yellow-100 text-yellow-700',
-    overdue: 'bg-red-100 text-red-700',
-  };
+    return vehicleSeeds
+      .map((vehicle) => {
+        const records = oilHistoryRecords
+          .filter((record) => record.vehicleId === vehicle.id)
+          .sort(
+            (a, b) =>
+              new Date(b.changeDate).getTime() - new Date(a.changeDate).getTime()
+          );
+        const latest = records[0];
+        const secondLast = records[1] ?? records[0];
+        if (!latest || !secondLast) return null;
 
-  const filtered = records.filter((r) =>
-    r.vehicleNo.toLowerCase().includes(search.toLowerCase())
-  );
+        const status = getOilStatus(
+          secondLast.recordedMileage,
+          vehicle.oilChangeInterval,
+          latest.recordedMileage
+        );
+
+        return {
+          id: latest.id,
+          lastChangeDate: latest.changeDate,
+          vehicleNumber: vehicle.vehicleNumber,
+          driver: vehicle.driver,
+          driverDisplayName: getVehiclePersonDisplayName(
+            vehicle.driver,
+            i18n.language
+          ),
+          driverSearchTokens: getVehiclePersonSearchTokens(vehicle.driver),
+          recordedMileage: latest.recordedMileage,
+          status,
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => Boolean(row))
+      .filter((row) =>
+        [row.vehicleNumber, row.driver, ...row.driverSearchTokens, row.status]
+          .join(' ')
+          .toLowerCase()
+          .includes(searchValue)
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.lastChangeDate).getTime() -
+          new Date(a.lastChangeDate).getTime()
+      );
+  }, [i18n.language, searchTerm]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <h1 className="text-xl font-bold text-slate-800">Oil Changes</h1>
-        <button className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2">
-          <Plus size={16} /> Record Oil Change
-        </button>
-      </div>
-
-      <div className="relative">
-        <Search
-          size={16}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-        />
-        <input
-          type="text"
-          placeholder="Search by vehicle number..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-200"
-        />
-      </div>
-
+    <div className="h-full overflow-auto p-4">
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="text-left px-4 py-2 text-xs font-semibold text-slate-600">
-                  Vehicle
+                <th className="sticky top-0 z-10 bg-slate-50 text-left px-4 py-2 text-xs font-semibold text-slate-600">
+                  Sl.
                 </th>
-                <th className="text-left px-4 py-2 text-xs font-semibold text-slate-600">
-                  Oil Type
+                <th className="sticky top-0 z-10 bg-slate-50 text-left px-4 py-2 text-xs font-semibold text-slate-600">
+                  Last Change Date
                 </th>
-                <th className="text-left px-4 py-2 text-xs font-semibold text-slate-600">
-                  Last Change
+                <th className="sticky top-0 z-10 bg-slate-50 text-left px-4 py-2 text-xs font-semibold text-slate-600">
+                  Vehicle No.
                 </th>
-                <th className="text-left px-4 py-2 text-xs font-semibold text-slate-600">
-                  Next Due
+                <th className="sticky top-0 z-10 bg-slate-50 text-left px-4 py-2 text-xs font-semibold text-slate-600">
+                  Driver
                 </th>
-                <th className="text-left px-4 py-2 text-xs font-semibold text-slate-600">
+                <th className="sticky top-0 z-10 bg-slate-50 text-left px-4 py-2 text-xs font-semibold text-slate-600">
+                  Changed Mileage
+                </th>
+                <th className="sticky top-0 z-10 bg-slate-50 text-left px-4 py-2 text-xs font-semibold text-slate-600">
                   Status
                 </th>
-                <th className="px-4 py-2"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filtered.map((record) => (
-                <tr key={record.id} className="hover:bg-slate-50">
+              {rows.map((row, index) => (
+                <tr key={row.id} className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 font-bold text-slate-500">
+                    {index + 1}
+                  </td>
                   <td className="px-4 py-2.5 font-medium text-slate-800">
-                    {record.vehicleNo}
+                    {formatDate(row.lastChangeDate)}
                   </td>
                   <td className="px-4 py-2.5 text-slate-600">
-                    {record.oilType}
+                    {row.vehicleNumber}
                   </td>
                   <td className="px-4 py-2.5 text-slate-600">
-                    {new Date(record.lastChange).toLocaleDateString()}
+                    {row.driverDisplayName}
                   </td>
                   <td className="px-4 py-2.5 text-slate-600">
-                    {new Date(record.nextDue).toLocaleDateString()}
+                    {row.recordedMileage}
                   </td>
                   <td className="px-4 py-2.5">
                     <span
                       className={`text-xs px-2 py-0.5 rounded-full capitalize ${
-                        statusColor[record.status]
+                        statusStyles[row.status]
                       }`}
                     >
-                      {record.status}
+                      {row.status}
                     </span>
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <button className="p-1 hover:bg-slate-100 rounded">
-                      <Eye size={14} className="text-slate-400" />
-                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {rows.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-slate-400 text-sm">No oil change records</p>
+          </div>
+        )}
       </div>
     </div>
   );
