@@ -26,6 +26,7 @@ import {
   Sun,
   Languages,
   CheckCheck,
+  Menu,
 } from 'lucide-react';
 import {
   employeeSeeds,
@@ -453,18 +454,10 @@ export default function Layout() {
             isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'
           }`}
         >
-          {companyProfile.logo ? (
-            <img
-              src={companyProfile.logo}
-              alt={companyDisplayName}
-              className="h-8 w-8 shrink-0 rounded-xl border border-emerald-300/40 bg-white object-contain p-0.5 shadow-[0_0_18px_rgba(52,211,153,0.28)]"
-            />
-          ) : (
-            <Package
-              className="text-emerald-400 shrink-0 drop-shadow-[0_0_18px_rgba(52,211,153,0.38)]"
-              size={isCollapsed ? 26 : 25}
-            />
-          )}
+          <Menu
+            className="text-emerald-400 shrink-0 drop-shadow-[0_0_18px_rgba(52,211,153,0.38)] transition-transform hover:scale-110"
+            size={isCollapsed ? 24 : 22}
+          />
           {!isCollapsed && (
             <span className="truncate text-sm font-black tracking-tight text-white leading-tight">
               {companyDisplayName}
@@ -785,12 +778,12 @@ export default function Layout() {
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="flex items-center gap-2 focus:outline-none"
               >
-                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-emerald-400 bg-white text-xs font-black text-emerald-700 shadow-sm transition-shadow hover:shadow-md">
+                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-[14px] border-2 border-emerald-400 bg-white text-xs font-black text-emerald-700 shadow-sm transition-shadow hover:shadow-md">
                   {companyProfile.logo ? (
                     <img
                       src={companyProfile.logo}
                       alt={companyDisplayName}
-                      className="h-full w-full object-contain p-1"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
                     getCompanyInitials(companyProfile.englishName)

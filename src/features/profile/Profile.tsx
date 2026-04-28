@@ -160,7 +160,7 @@ export default function Profile() {
                large
              />
              <EditableField 
-               label="اسم الشركة" 
+               label="اسم الشركة (Arabic Name)" 
                value={profile.arabicName} 
                onSave={(v) => updateField('arabicName', v)} 
                onCopy={() => navigator.clipboard.writeText(profile.arabicName)} 
