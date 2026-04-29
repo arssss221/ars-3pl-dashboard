@@ -26,7 +26,10 @@ import {
   Sun,
   Languages,
   CheckCheck,
-  Menu,
+  ChartColumn,
+  CalendarDays,
+  CalendarRange,
+  HandCoins,
 } from 'lucide-react';
 import {
   employeeSeeds,
@@ -145,6 +148,15 @@ export default function Layout() {
       if (last === 'paid') return translateTerm('Paid Transactions', language);
       return translateTerm('Transaction', language);
     }
+    if (segments[0] === 'progress-report') {
+      if (last === 'daily-report') return translateTerm('Daily Report', language);
+      if (last === 'monthly-report') return translateTerm('Monthly Report', language);
+      return translateTerm('Progress Report', language);
+    }
+    if (segments[0] === 'accounts-salary') {
+      if (last === 'paid-history') return translateTerm('Paid History', language);
+      return translateTerm('Accounts and Salary', language);
+    }
     if (last === 'id-manager') return translateTerm('ID Manager', language);
     if (last === 'profile') return translateTerm('Company Profile', language);
     if (last === 'permissions') return translateTerm('Permissions', language);
@@ -252,10 +264,24 @@ export default function Layout() {
       setOpenSubmenu('transaction');
       return;
     }
+    if (location.pathname.startsWith('/progress-report')) {
+      setOpenSubmenu('progress-report');
+      return;
+    }
+    if (location.pathname.startsWith('/accounts-salary')) {
+      setOpenSubmenu('accounts-salary');
+      return;
+    }
     if (openSubmenu === 'vehicles') {
       setOpenSubmenu(null);
     }
     if (openSubmenu === 'transaction') {
+      setOpenSubmenu(null);
+    }
+    if (openSubmenu === 'progress-report') {
+      setOpenSubmenu(null);
+    }
+    if (openSubmenu === 'accounts-salary') {
       setOpenSubmenu(null);
     }
   }, [location.pathname, openSubmenu]);
@@ -267,6 +293,8 @@ export default function Layout() {
 
   const isVehiclesActive = location.pathname.startsWith('/vehicles');
   const isTransactionActive = location.pathname.startsWith('/transaction');
+  const isProgressReportActive = location.pathname.startsWith('/progress-report');
+  const isAccountsSalaryActive = location.pathname.startsWith('/accounts-salary');
   const notificationSummary = {
     paperRisks: employeeSeeds.filter(
       (employee) =>

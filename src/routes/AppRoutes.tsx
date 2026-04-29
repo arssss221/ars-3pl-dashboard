@@ -14,6 +14,9 @@ import Employees from '../features/employees/Employees';
 import Transaction from '../features/transactions/Transaction';
 import PaidTransactions from '../features/transactions/PaidTransactions';
 import IDManager from '../features/id_manager/IDManager';
+import DailyReport from '../features/progress_report/DailyReport';
+import MonthlyReport from '../features/progress_report/MonthlyReport';
+import PaidHistory from '../features/accounts_salary/PaidHistory';
 
 // --- Profile & Settings (আপনার নতুন পাথ অনুযায়ী) ---
 import Profile from '../features/profile/Profile';
@@ -136,6 +139,17 @@ export default function AppRoutes() {
               <Route index element={<Transaction />} />
               <Route path="paid" element={<PaidTransactions />} />
             </Route>
+          </Route>
+
+          <Route path="progress-report">
+            <Route index element={<Navigate to="daily-report" replace />} />
+            <Route path="daily-report" element={<DailyReport />} />
+            <Route path="monthly-report" element={<MonthlyReport />} />
+          </Route>
+
+          <Route path="accounts-salary">
+            <Route index element={<Navigate to="paid-history" replace />} />
+            <Route path="paid-history" element={<PaidHistory />} />
           </Route>
         </Route>
       </Routes>
