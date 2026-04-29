@@ -2,18 +2,15 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
-  ArrowUpRight,
-  BadgeCheck,
-  CalendarClock,
+  ArrowRight,
   Car,
-  ClipboardCheck,
+  CheckCircle2,
+  Clock,
   CreditCard,
   FileWarning,
-  Fuel,
   Gauge,
   IdCard,
-  MapPinned,
-  ShieldCheck,
+  LayoutDashboard,
   Users,
   Wrench,
 } from 'lucide-react';
@@ -34,475 +31,343 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const data = useMemo(() => {
-    const workingRiders = employeeSeeds.filter(
-      (employee) => employee.status === 'Working'
-    ).length;
+    const workingRiders = employeeSeeds.filter((e) => e.status === 'Working').length;
+    const leaveRiders = employeeSeeds.filter((e) => e.status === 'Leave').length;
     const incompletePapers = employeeSeeds.filter(
-      (employee) =>
-        employee.agreement === 'Not Complete' ||
-        employee.commitment === 'Not Complete' ||
-        !employee.healthInsuranceName ||
-        !employee.healthInsuranceExpiry
+      (e) => e.agreement === 'Not Complete' || e.commitment === 'Not Complete' || !e.healthInsuranceName || !e.healthInsuranceExpiry
     ).length;
-    const iqamaUrgent = employeeSeeds.filter((employee) => {
-      const days = getDaysUntil(employee.iqamaExpiry);
+    const iqamaUrgent = employeeSeeds.filter((e) => {
+      const days = getDaysUntil(e.iqamaExpiry);
       return days !== null && days <= 30;
     }).length;
 
-    const workingVehicles = vehicleSeeds.filter(
-      (vehicle) => vehicle.status === 'Working'
-    ).length;
-    const vehicleRisks = vehicleSeeds.filter((vehicle) => {
-      const insurance = getDaysUntil(vehicle.insuranceExpiry);
-      const permit = getDaysUntil(vehicle.roadPermitExpiry);
-      const auth = getDaysUntil(vehicle.authExpiryDate);
-      return [insurance, permit, auth].some(
-        (days) => days !== null && days <= 30
-      );
+    const workingVehicles = vehicleSeeds.filter((v) => v.status === 'Working').length;
+    const maintenanceVehicles = vehicleSeeds.filter((v) => v.status === 'Maintenance').length;
+    const vehicleRisks = vehicleSeeds.filter((v) => {
+      const insurance = getDaysUntil(v.insuranceExpiry);
+      const permit = getDaysUntil(v.roadPermitExpiry);
+      const auth = getDaysUntil(v.authExpiryDate);
+      return [insurance, permit, auth].some((days) => days !== null && days <= 30);
     }).length;
-    const oilWatch = vehicleSeeds.filter((vehicle) => {
-      const days = getDaysUntil(vehicle.nextOilDue);
-      return days !== null && days <= 30;
-    }).length;
-    const unavailableVehicles = vehicleSeeds.filter(
-      (vehicle) => vehicle.status === 'Unavailable'
-    ).length;
+    const openAccidents = vehicleSeeds.filter((v) => v.status === 'Accident').length;
+
+    const dueMoney = 1930; // Mock data
+    const paidMoney = 840; // Mock data
 
     return {
+      totalEmployees: employeeSeeds.length,
       workingRiders,
+      leaveRiders,
       incompletePapers,
       iqamaUrgent,
+      totalVehicles: vehicleSeeds.length,
       workingVehicles,
+      maintenanceVehicles,
       vehicleRisks,
-      oilWatch,
-      unavailableVehicles,
-      dueMoney: 1930,
-      paidMoney: 840,
-      todayQueue: 12,
-      openAccidents: 2,
-      pendingIds: 4,
+      openAccidents,
+      dueMoney,
+      paidMoney,
     };
   }, []);
 
-  const readiness =
-    vehicleSeeds.length > 0
-      ? Math.round((data.workingVehicles / vehicleSeeds.length) * 100)
-      : 0;
-  const riderCoverage =
-    employeeSeeds.length > 0
-      ? Math.round((data.workingRiders / employeeSeeds.length) * 100)
-      : 0;
-  const collectionRate =
-    data.dueMoney + data.paidMoney > 0
-      ? Math.round((data.paidMoney / (data.dueMoney + data.paidMoney)) * 100)
-      : 0;
+  const totalUrgentIssues = data.iqamaUrgent + data.vehicleRisks + data.openAccidents;
 
   return (
-    <div className="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.16),transparent_32%),linear-gradient(135deg,#f8fafc_0%,#eefdf7_52%,#fff7ed_100%)] p-4 md:p-5">
-      <div className="mx-auto max-w-7xl space-y-4">
-        <section className="overflow-hidden rounded-[28px] border border-white/70 bg-slate-950 text-white shadow-xl">
-          <div className="relative p-5 md:p-6">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(16,185,129,0.42),transparent_28%),radial-gradient(circle_at_85%_15%,rgba(251,146,60,0.32),transparent_26%)]" />
-            <div className="relative grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
-              <div className="flex flex-col items-center justify-center text-center lg:items-start lg:text-left">
-                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-emerald-200">
-                  ARS 3PL Control Tower
-                </p>
-                <h1 className="mt-2 max-w-3xl text-3xl font-black tracking-tight md:text-5xl">
-                  One screen for riders, fleet, cash, and compliance.
-                </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300">
-                  Designed for daily dispatch decisions: who is working, which
-                  vehicles need action, where money is stuck, and what papers can
-                  block operations.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <HeroTile
-                  label="Today Queue"
-                  value={`${data.todayQueue}`}
-                  sub="items need attention"
-                  icon={<ClipboardCheck size={18} />}
-                />
-                <HeroTile
-                  label="Collection"
-                  value={`${collectionRate}%`}
-                  sub="paid vs total ledger"
-                  icon={<CreditCard size={18} />}
-                />
-                <HeroTile
-                  label="Fleet Ready"
-                  value={`${readiness}%`}
-                  sub="working vehicles"
-                  icon={<Gauge size={18} />}
-                />
-                <HeroTile
-                  label="Rider Cover"
-                  value={`${riderCoverage}%`}
-                  sub="working riders"
-                  icon={<Users size={18} />}
-                />
-              </div>
+    <div className="min-h-full bg-slate-50/50 p-4 md:p-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        
+        {/* Header Section */}
+        <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-emerald-100 text-emerald-600">
+                <LayoutDashboard size={18} />
+              </span>
+              <p className="text-sm font-semibold text-emerald-600 tracking-wide uppercase">Overview</p>
             </div>
+            <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">Command Center</h1>
+            <p className="mt-1 text-sm text-slate-500">Real-time metrics for your fleet, team, and financials.</p>
           </div>
-        </section>
+          
+          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+            <div className={`h-2.5 w-2.5 rounded-full ${totalUrgentIssues > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></div>
+            <span className="text-sm font-medium text-slate-700">
+              {totalUrgentIssues > 0 ? `${totalUrgentIssues} action(s) required` : 'All systems operational'}
+            </span>
+          </div>
+        </header>
 
-        <section className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3">
-          <MetricCard
-            label="Riders"
-            value={`${employeeSeeds.length}`}
-            sub={`${data.workingRiders} working`}
-            icon={<Users size={18} />}
-            tone="emerald"
+        {/* Top KPIs */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
+          <KpiCard 
+            title="Total Employees" 
+            value={data.totalEmployees} 
+            subtitle={`${data.workingRiders} active today`}
+            icon={<Users className="w-5 h-5 md:w-6 md:h-6" />} 
+            tone="emerald" 
           />
-          <MetricCard
-            label="Vehicles"
-            value={`${vehicleSeeds.length}`}
-            sub={`${data.workingVehicles} on road`}
-            icon={<Car size={18} />}
-            tone="blue"
+          <KpiCard 
+            title="Total Fleet" 
+            value={data.totalVehicles} 
+            subtitle={`${data.workingVehicles} on the road`}
+            icon={<Car className="w-5 h-5 md:w-6 md:h-6" />} 
+            tone="blue" 
           />
-          <MetricCard
-            label="Paper Risk"
-            value={`${data.incompletePapers + data.iqamaUrgent}`}
-            sub="profiles need review"
-            icon={<FileWarning size={18} />}
-            tone="amber"
+          <KpiCard 
+            title="Pending Ledger" 
+            value={`${data.dueMoney} SAR`} 
+            subtitle={`${data.paidMoney} SAR collected`}
+            icon={<CreditCard className="w-5 h-5 md:w-6 md:h-6" />} 
+            tone="slate" 
           />
-          <MetricCard
-            label="Money Due"
-            value={`${data.dueMoney} SAR`}
-            sub={`${data.paidMoney} SAR paid`}
-            icon={<CreditCard size={18} />}
-            tone="red"
+          <KpiCard 
+            title="Active Alerts" 
+            value={totalUrgentIssues} 
+            subtitle="Needs immediate attention"
+            icon={<AlertTriangle className="w-5 h-5 md:w-6 md:h-6" />} 
+            tone={totalUrgentIssues > 0 ? 'amber' : 'emerald'} 
           />
-          <MetricCard
-            label="Service Watch"
-            value={`${data.vehicleRisks + data.unavailableVehicles}`}
-            sub="fleet actions"
-            icon={<Wrench size={18} />}
-            tone="slate"
+          <KpiCard 
+            title="On Leave" 
+            value={data.leaveRiders} 
+            subtitle="Employees away"
+            icon={<Clock className="w-5 h-5 md:w-6 md:h-6" />} 
+            tone="slate" 
           />
-        </section>
-
-        <section className="grid gap-4 xl:grid-cols-[1fr_1fr_0.9fr]">
-          <Panel title="Operational Health" icon={<ShieldCheck size={16} />}>
-            <ProgressLine
-              label="Rider coverage"
-              value={riderCoverage}
-              hint={`${data.workingRiders}/${employeeSeeds.length} working`}
-              tone="emerald"
-            />
-            <ProgressLine
-              label="Fleet readiness"
-              value={readiness}
-              hint={`${data.workingVehicles}/${vehicleSeeds.length} working`}
-              tone="blue"
-            />
-            <ProgressLine
-              label="Collection rate"
-              value={collectionRate}
-              hint={`${data.paidMoney} SAR paid`}
-              tone="amber"
-            />
-          </Panel>
-
-          <Panel title="Risk Radar" icon={<AlertTriangle size={16} />}>
-            <RiskRow
-              label="Iqama expiring or expired"
-              value={data.iqamaUrgent}
-              icon={<IdCard size={14} />}
-              action={() => navigate('/employees')}
-            />
-            <RiskRow
-              label="Vehicle insurance / permit risk"
-              value={data.vehicleRisks}
-              icon={<Car size={14} />}
-              action={() => navigate('/vehicles')}
-            />
-            <RiskRow
-              label="Open accident workflows"
-              value={data.openAccidents}
-              icon={<AlertTriangle size={14} />}
-              action={() => navigate('/vehicles/accidents')}
-            />
-            <RiskRow
-              label="Pending platform IDs"
-              value={data.pendingIds}
-              icon={<IdCard size={14} />}
-              action={() => navigate('/id-manager')}
-            />
-          </Panel>
-
-          <Panel title="Quick Command" icon={<ArrowUpRight size={16} />}>
-            <div className="grid grid-cols-2 gap-2">
-              <QuickButton
-                label="Riders"
-                icon={<Users size={16} />}
-                onClick={() => navigate('/employees')}
-              />
-              <QuickButton
-                label="Fleet"
-                icon={<Car size={16} />}
-                onClick={() => navigate('/vehicles')}
-              />
-              <QuickButton
-                label="Ledger"
-                icon={<CreditCard size={16} />}
-                onClick={() => navigate('/transaction')}
-              />
-              <QuickButton
-                label="IDs"
-                icon={<IdCard size={16} />}
-                onClick={() => navigate('/id-manager')}
-              />
-            </div>
-          </Panel>
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-          <Panel title="Dispatch Board" icon={<MapPinned size={16} />}>
-            <div className="grid gap-2 md:grid-cols-2">
-              {vehicleSeeds.slice(0, 4).map((vehicle) => (
-                <div
-                  key={vehicle.id}
-                  className="flex items-center justify-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3 text-center"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-emerald-300">
-                    <Car size={18} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-black text-slate-800">
-                      {vehicle.vehicleNumber}
-                    </p>
-                    <p className="truncate text-[11px] font-semibold text-slate-500">
-                      {vehicle.status} • {vehicle.place}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Panel>
-
-          <Panel title="Next Best Actions" icon={<CalendarClock size={16} />}>
-            <ActionItem
-              title="Review incomplete rider papers"
-              meta={`${data.incompletePapers} rider profiles`}
-              icon={<FileWarning size={14} />}
-            />
-            <ActionItem
-              title="Collect pending ledger balances"
-              meta={`${data.dueMoney} SAR outstanding`}
-              icon={<CreditCard size={14} />}
-            />
-            <ActionItem
-              title="Check vehicle expiry documents"
-              meta={`${data.vehicleRisks} vehicles at risk`}
-              icon={<BadgeCheck size={14} />}
-            />
-            <ActionItem
-              title="Plan oil and servicing queue"
-              meta={`${data.oilWatch} vehicles to monitor`}
-              icon={<Fuel size={14} />}
-            />
-          </Panel>
-        </section>
-      </div>
-    </div>
-  );
-}
-
-function HeroTile({
-  label,
-  value,
-  sub,
-  icon,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="flex min-h-28 flex-col items-center justify-center rounded-3xl border border-white/10 bg-white/10 p-4 text-center backdrop-blur">
-      <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-emerald-200">
-        {icon}
-      </div>
-      <p className="text-2xl font-black">{value}</p>
-      <p className="text-[10px] font-black uppercase tracking-wider text-slate-300">
-        {label}
-      </p>
-      <p className="mt-1 text-[10px] text-slate-400">{sub}</p>
-    </div>
-  );
-}
-
-function MetricCard({
-  label,
-  value,
-  sub,
-  icon,
-  tone,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-  icon: React.ReactNode;
-  tone: 'emerald' | 'blue' | 'amber' | 'red' | 'slate';
-}) {
-  const toneClass = {
-    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    blue: 'bg-sky-50 text-sky-700 border-sky-100',
-    amber: 'bg-amber-50 text-amber-700 border-amber-100',
-    red: 'bg-red-50 text-red-700 border-red-100',
-    slate: 'bg-slate-50 text-slate-700 border-slate-100',
-  }[tone];
-
-  return (
-    <div className={`rounded-2xl border p-4 text-center shadow-sm ${toneClass}`}>
-      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm">
-        {icon}
-      </div>
-      <p className="mt-2 text-2xl font-black text-slate-900">{value}</p>
-      <p className="text-[11px] font-black uppercase tracking-wider">{label}</p>
-      <p className="mt-1 text-[11px] font-semibold text-slate-500">{sub}</p>
-    </div>
-  );
-}
-
-function Panel({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-[24px] border border-white bg-white/90 p-4 shadow-sm">
-      <div className="mb-4 flex items-center justify-center gap-2 text-center">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-emerald-300">
-          {icon}
+          <KpiCard 
+            title="In Maintenance" 
+            value={data.maintenanceVehicles} 
+            subtitle="Vehicles in garage"
+            icon={<Wrench className="w-5 h-5 md:w-6 md:h-6" />} 
+            tone="amber" 
+          />
+          <KpiCard 
+            title="Missing Docs" 
+            value={data.incompletePapers} 
+            subtitle="Profiles to update"
+            icon={<FileWarning className="w-5 h-5 md:w-6 md:h-6" />} 
+            tone="amber" 
+          />
+          <KpiCard 
+            title="Open Accidents" 
+            value={data.openAccidents} 
+            subtitle="Under workflow"
+            icon={<AlertTriangle className="w-5 h-5 md:w-6 md:h-6" />} 
+            tone="red" 
+          />
         </div>
-        <h2 className="text-sm font-black uppercase tracking-wider text-slate-800">
-          {title}
-        </h2>
+
+        {/* Main Content Layout */}
+        <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+          
+          {/* Left Column: Operational Status */}
+          <div className="space-y-6">
+            
+            {/* Fleet Status Panel */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Gauge size={20} className="text-sky-500" /> Fleet Readiness
+                </h2>
+                <button onClick={() => navigate('/vehicles')} className="text-sm font-semibold text-sky-600 hover:text-sky-700 flex items-center gap-1">
+                  View All <ArrowRight size={16} />
+                </button>
+              </div>
+              
+              <div className="space-y-5">
+                <ProgressBar 
+                  label="On Duty" 
+                  value={data.workingVehicles} 
+                  total={data.totalVehicles} 
+                  tone="emerald" 
+                />
+                <ProgressBar 
+                  label="In Maintenance" 
+                  value={data.maintenanceVehicles} 
+                  total={data.totalVehicles} 
+                  tone="amber" 
+                />
+                <ProgressBar 
+                  label="Accident / Offline" 
+                  value={data.openAccidents} 
+                  total={data.totalVehicles} 
+                  tone="red" 
+                />
+              </div>
+            </div>
+
+            {/* Employee Status Panel */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Users size={20} className="text-emerald-500" /> Workforce Status
+                </h2>
+                <button onClick={() => navigate('/employees')} className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+                  View All <ArrowRight size={16} />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                <div className="flex flex-col items-center justify-center text-center rounded-xl bg-emerald-50 p-3 sm:p-4 border border-emerald-100">
+                  <p className="text-[10px] sm:text-xs font-semibold text-emerald-600 uppercase tracking-wide leading-tight">Active</p>
+                  <p className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold text-emerald-900">{data.workingRiders}</p>
+                </div>
+                <div className="flex flex-col items-center justify-center text-center rounded-xl bg-slate-50 p-3 sm:p-4 border border-slate-200">
+                  <p className="text-[10px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wide leading-tight">On Leave</p>
+                  <p className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold text-slate-900">{data.leaveRiders}</p>
+                </div>
+                <div className="flex flex-col items-center justify-center text-center rounded-xl bg-amber-50 p-3 sm:p-4 border border-amber-100">
+                  <p className="text-[10px] sm:text-xs font-semibold text-amber-600 uppercase tracking-wide leading-tight">Missing Docs</p>
+                  <p className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold text-amber-900">{data.incompletePapers}</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Right Column: Urgent Action Items & Quick Links */}
+          <div className="space-y-6">
+            
+            {/* Urgent Alerts Panel */}
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col h-full">
+              <div className="border-b border-slate-100 bg-slate-50 p-5">
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <AlertTriangle size={20} className="text-amber-500" /> Action Required
+                </h2>
+                <p className="text-sm text-slate-500 mt-1">Issues needing immediate resolution.</p>
+              </div>
+              
+              <div className="p-2 flex-1 flex flex-col gap-1 overflow-y-auto">
+                {totalUrgentIssues === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500">
+                    <CheckCircle2 size={40} className="text-emerald-400 mb-3" />
+                    <p className="font-semibold text-slate-900">All Caught Up</p>
+                    <p className="text-sm mt-1">No urgent issues to display.</p>
+                  </div>
+                ) : (
+                  <>
+                    {data.iqamaUrgent > 0 && (
+                      <AlertItem 
+                        icon={<IdCard size={18} />} 
+                        title="Iqama Expiring Soon" 
+                        description={`${data.iqamaUrgent} employee(s) have Iqamas expiring within 30 days.`}
+                        actionText="Review"
+                        onClick={() => navigate('/employees')}
+                        tone="amber"
+                      />
+                    )}
+                    {data.vehicleRisks > 0 && (
+                      <AlertItem 
+                        icon={<FileWarning size={18} />} 
+                        title="Vehicle Document Risk" 
+                        description={`${data.vehicleRisks} vehicle(s) have insurance or permits ending soon.`}
+                        actionText="Review"
+                        onClick={() => navigate('/vehicles')}
+                        tone="amber"
+                      />
+                    )}
+                    {data.openAccidents > 0 && (
+                      <AlertItem 
+                        icon={<Wrench size={18} />} 
+                        title="Open Accident Reports" 
+                        description={`${data.openAccidents} vehicle(s) currently registered under accident workflow.`}
+                        actionText="Manage"
+                        onClick={() => navigate('/vehicles/accidents')}
+                        tone="red"
+                      />
+                    )}
+                    {data.incompletePapers > 0 && (
+                      <AlertItem 
+                        icon={<FileWarning size={18} />} 
+                        title="Incomplete Profiles" 
+                        description={`${data.incompletePapers} employee(s) missing contracts or insurance data.`}
+                        actionText="Update"
+                        onClick={() => navigate('/employees')}
+                        tone="slate"
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
       </div>
-      <div className="space-y-3">{children}</div>
     </div>
   );
 }
 
-function ProgressLine({
-  label,
-  value,
-  hint,
-  tone,
-}: {
-  label: string;
-  value: number;
-  hint: string;
-  tone: 'emerald' | 'blue' | 'amber';
-}) {
-  const barClass = {
-    emerald: 'bg-emerald-500',
-    blue: 'bg-sky-500',
-    amber: 'bg-amber-500',
+// --- Helper Components ---
+
+function KpiCard({ title, value, subtitle, icon, tone }: { title: string, value: string | number, subtitle: string, icon: React.ReactNode, tone: 'emerald' | 'blue' | 'amber' | 'slate' | 'red' }) {
+  const styles = {
+    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    blue: 'bg-sky-50 text-sky-600 border-sky-100',
+    amber: 'bg-amber-50 text-amber-600 border-amber-100',
+    slate: 'bg-slate-50 text-slate-600 border-slate-200',
+    red: 'bg-red-50 text-red-600 border-red-100',
   }[tone];
 
   return (
-    <div className="rounded-2xl bg-slate-50 p-3 text-center">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-black uppercase tracking-wider text-slate-600">
-          {label}
-        </span>
-        <span className="text-sm font-black text-slate-900">{value}%</span>
+    <div className="flex flex-col items-center justify-center text-center rounded-2xl border border-slate-200 bg-white p-4 md:p-6 shadow-sm transition hover:shadow-md">
+      <div className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl border ${styles} mb-3 md:mb-4 shadow-sm`}>
+        {icon}
       </div>
-      <div className="mt-2 h-2 rounded-full bg-white">
-        <div
-          className={`h-2 rounded-full ${barClass}`}
-          style={{ width: `${Math.min(value, 100)}%` }}
-        />
+      <div>
+        <p className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">{title}</p>
+        <p className="mt-1 md:mt-2 text-2xl md:text-3xl font-black text-slate-900">{value}</p>
+        <p className="mt-1 text-[10px] md:text-xs font-semibold text-slate-400 leading-tight">{subtitle}</p>
       </div>
-      <p className="mt-1 text-[11px] font-semibold text-slate-500">{hint}</p>
     </div>
   );
 }
 
-function RiskRow({
-  label,
-  value,
-  icon,
-  action,
-}: {
-  label: string;
-  value: number;
-  icon: React.ReactNode;
-  action: () => void;
-}) {
+function ProgressBar({ label, value, total, tone }: { label: string, value: number, total: number, tone: 'emerald' | 'amber' | 'red' }) {
+  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+  
+  const barColor = {
+    emerald: 'bg-emerald-500',
+    amber: 'bg-amber-500',
+    red: 'bg-red-500',
+  }[tone];
+
   return (
-    <button
-      onClick={action}
-      className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3 text-center transition-colors hover:bg-emerald-50"
-    >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-red-500 shadow-sm">
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-xs font-black uppercase tracking-wider text-slate-700">
-          {label}
-        </span>
-        <span className="text-[11px] font-semibold text-slate-500">
-          {value} open item
-        </span>
-      </span>
-      <span className="text-lg font-black text-slate-900">{value}</span>
-    </button>
+    <div>
+      <div className="flex items-center justify-between text-sm mb-2">
+        <span className="font-semibold text-slate-700">{label}</span>
+        <span className="font-bold text-slate-900">{value} <span className="text-slate-400 font-medium">/ {total}</span></span>
+      </div>
+      <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full ${barColor} rounded-full`} style={{ width: `${percentage}%` }}></div>
+      </div>
+    </div>
   );
 }
 
-function QuickButton({
-  label,
-  icon,
-  onClick,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex min-h-24 flex-col items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 p-3 text-center font-black text-slate-700 transition-all hover:-translate-y-0.5 hover:bg-emerald-50 hover:text-emerald-700"
-    >
-      <span className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm">
-        {icon}
-      </span>
-      <span className="text-xs uppercase tracking-wider">{label}</span>
-    </button>
-  );
-}
+function AlertItem({ icon, title, description, actionText, onClick, tone }: { icon: React.ReactNode, title: string, description: string, actionText: string, onClick: () => void, tone: 'amber' | 'red' | 'slate' }) {
+  const iconColor = {
+    amber: 'text-amber-500 bg-amber-50',
+    red: 'text-red-500 bg-red-50',
+    slate: 'text-slate-500 bg-slate-100',
+  }[tone];
 
-function ActionItem({
-  title,
-  meta,
-  icon,
-}: {
-  title: string;
-  meta: string;
-  icon: React.ReactNode;
-}) {
   return (
-    <div className="flex items-center justify-center gap-3 rounded-2xl bg-slate-50 p-3 text-center">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-700 shadow-sm">
+    <div className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 transition">
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconColor}`}>
         {icon}
-      </span>
-      <span className="min-w-0">
-        <span className="block text-sm font-black text-slate-800">{title}</span>
-        <span className="text-[11px] font-semibold text-slate-500">{meta}</span>
-      </span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold text-slate-900">{title}</p>
+        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{description}</p>
+      </div>
+      <button 
+        onClick={onClick}
+        className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-sm transition"
+      >
+        {actionText}
+      </button>
     </div>
   );
 }
