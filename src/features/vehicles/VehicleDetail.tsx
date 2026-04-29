@@ -8,11 +8,8 @@ import {
   Car,
   FileText,
   Fuel,
-  Gauge,
   IdCard,
-  MapPin,
   MessageCircle,
-  Palette,
   Phone,
   ShieldCheck,
   User,
@@ -133,12 +130,6 @@ export default function VehicleDetail() {
     );
   }
 
-  const dueItems = [
-    { label: 'Insurance Expiry Date', date: vehicle.insuranceExpiry },
-    { label: 'Road Permit Expiry', date: vehicle.roadPermitExpiry },
-    { label: 'Auth. Exp. Date', date: vehicle.authExpiryDate },
-    { label: 'Import Date', date: vehicle.importDate },
-  ];
   const authRiderName = getVehiclePersonDisplayName(
     vehicle.authRider,
     i18n.language
