@@ -98,7 +98,7 @@ export default function Dashboard() {
         </header>
 
         {/* Top KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
           <KpiCard 
             title="Total Employees" 
             value={data.totalEmployees} 
@@ -311,14 +311,14 @@ function KpiCard({ title, value, subtitle, icon, tone }: { title: string, value:
   }[tone];
 
   return (
-    <div className="flex flex-col items-center justify-center text-center rounded-2xl border border-slate-200 bg-white p-4 md:p-6 shadow-sm transition hover:shadow-md">
-      <div className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl border ${styles} mb-3 md:mb-4 shadow-sm`}>
+    <div className="flex flex-col items-center justify-center text-center rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 md:p-6 shadow-sm transition hover:shadow-md">
+      <div className={`hidden sm:flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl border ${styles} mb-2 sm:mb-3 md:mb-4 shadow-sm`}>
         {icon}
       </div>
       <div>
-        <p className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">{title}</p>
-        <p className="mt-1 md:mt-2 text-2xl md:text-3xl font-black text-slate-900">{value}</p>
-        <p className="mt-1 text-[10px] md:text-xs font-semibold text-slate-400 leading-tight">{subtitle}</p>
+        <p className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight line-clamp-1">{title}</p>
+        <p className="mt-0.5 sm:mt-1 md:mt-2 text-xl sm:text-2xl md:text-3xl font-black text-slate-900">{value}</p>
+        <p className="mt-0.5 sm:mt-1 text-[9px] sm:text-[10px] md:text-xs font-semibold text-slate-400 leading-tight line-clamp-1">{subtitle}</p>
       </div>
     </div>
   );
