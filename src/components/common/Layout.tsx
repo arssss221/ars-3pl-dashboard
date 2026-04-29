@@ -98,11 +98,19 @@ export default function Layout() {
   const { i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const sessionData = localStorage.getItem('userSession');
-  const user = sessionData ? JSON.parse(sessionData) : null;
+  const [sessionDataRaw, setSessionDataRaw] = useState(() => localStorage.getItem('userSession'));
+  const user = sessionDataRaw ? JSON.parse(sessionDataRaw) : null;
   const permissions = user?.permissions || {};
   const shouldExpandSidebar = () =>
     window.innerWidth >= 1024 && window.innerWidth < 1536;
+
+  useEffect(() => {
+    const handleSessionUpdate = () => {
+      setSessionDataRaw(localStorage.getItem('userSession'));
+    };
+    window.addEventListener('userSessionUpdated', handleSessionUpdate);
+    return () => window.removeEventListener('userSessionUpdated', handleSessionUpdate);
+  }, []);
 
   const translateTerm = (term: string, language: LanguageMode) => {
     const bundle = i18n.getResourceBundle(language, 'translation') as
@@ -454,10 +462,17 @@ export default function Layout() {
             isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'
           }`}
         >
-          <Menu
-            className="text-emerald-400 shrink-0 drop-shadow-[0_0_18px_rgba(52,211,153,0.38)] transition-transform hover:scale-110"
-            size={isCollapsed ? 24 : 22}
-          />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-white text-xs font-black text-emerald-700 shadow-sm transition-transform hover:scale-105">
+            {companyProfile.logo ? (
+              <img
+                src={companyProfile.logo}
+                alt={companyDisplayName}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              getCompanyInitials(companyProfile.englishName)
+            )}
+          </div>
           {!isCollapsed && (
             <span className="truncate text-sm font-black tracking-tight text-white leading-tight">
               {companyDisplayName}
@@ -779,14 +794,14 @@ export default function Layout() {
                 className="flex items-center gap-2 focus:outline-none"
               >
                 <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-[14px] border-2 border-emerald-400 bg-white text-xs font-black text-emerald-700 shadow-sm transition-shadow hover:shadow-md">
-                  {companyProfile.logo ? (
+                  {user?.profilePicture ? (
                     <img
-                      src={companyProfile.logo}
-                      alt={companyDisplayName}
+                      src={user.profilePicture}
+                      alt={user?.name || 'User'}
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    getCompanyInitials(companyProfile.englishName)
+                    getCompanyInitials(user?.name || 'Admin')
                   )}
                 </div>
               </button>

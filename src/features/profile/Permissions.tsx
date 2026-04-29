@@ -1,329 +1,468 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
-  AlertTriangle,
-  Car,
-  CheckCircle,
-  Clock,
-  CreditCard,
-  Eye,
-  FileText,
-  KeyRound,
-  Lock,
-  Plus,
-  Settings as SettingsIcon,
   Shield,
-  Users,
+  Plus,
+  Edit2,
+  Trash2,
+  X,
+  User as UserIcon,
+  CheckCircle,
   XCircle,
+  Camera,
 } from 'lucide-react';
 
-type TabKey = 'Roles' | 'Matrix' | 'Audit';
-type Tone = 'emerald' | 'sky' | 'amber' | 'rose' | 'slate';
+interface PermissionLevel {
+  view: boolean;
+  edit: boolean;
+}
 
-const roleBlueprints: Array<{
-  name: string;
-  users: number;
-  tone: Tone;
-  description: string;
-  scope: string[];
-}> = [
-  {
-    name: 'Owner',
-    users: 1,
-    tone: 'emerald',
-    description: 'Full command over dashboard, finance, rider records, fleet, settings, and user access.',
-    scope: ['Everything', 'Billing', 'Security'],
-  },
-  {
-    name: 'Admin',
-    users: 2,
-    tone: 'sky',
-    description: 'Runs daily operations and can update employees, vehicles, IDs, and reports.',
-    scope: ['Employees', 'Vehicles', 'ID Manager'],
-  },
-  {
-    name: 'Dispatcher',
-    users: 4,
-    tone: 'amber',
-    description: 'Handles assignments, service schedules, accidents, and real-time fleet follow-up.',
-    scope: ['Fleet', 'Servicing', 'Accidents'],
-  },
-  {
-    name: 'Accountant',
-    users: 2,
-    tone: 'rose',
-    description: 'Controls transaction entries, paid records, dues, and receipt visibility.',
-    scope: ['Transactions', 'Paid Ledger', 'Receipts'],
-  },
-  {
-    name: 'Viewer',
-    users: 3,
-    tone: 'slate',
-    description: 'Read-only access for supervisors who need visibility without edit permission.',
-    scope: ['Read Only', 'Reports', 'Alerts'],
-  },
-];
+type ModuleKey = 'dashboard' | 'employees' | 'vehicles' | 'idManager' | 'transaction' | 'settings';
 
-const permissionMatrix = [
-  { module: 'Dashboard', icon: Shield, owner: true, admin: true, dispatcher: true, accountant: true, viewer: true },
-  { module: 'Employees', icon: Users, owner: true, admin: true, dispatcher: false, accountant: false, viewer: true },
-  { module: 'Vehicles', icon: Car, owner: true, admin: true, dispatcher: true, accountant: false, viewer: true },
-  { module: 'ID Manager', icon: FileText, owner: true, admin: true, dispatcher: false, accountant: false, viewer: false },
-  { module: 'Transactions', icon: CreditCard, owner: true, admin: true, dispatcher: false, accountant: true, viewer: false },
-  { module: 'Settings', icon: SettingsIcon, owner: true, admin: false, dispatcher: false, accountant: false, viewer: false },
-];
+const moduleNames: Record<ModuleKey, string> = {
+  dashboard: 'Dashboard',
+  employees: 'Employees',
+  vehicles: 'Vehicles',
+  idManager: 'ID Manager',
+  transaction: 'Transaction',
+  settings: 'Settings',
+};
 
-const auditLogs = [
-  { time: 'Today 09:42', actor: 'Owner', action: 'Changed transaction permission for Accountant', tone: 'emerald' as Tone },
-  { time: 'Today 08:10', actor: 'Admin', action: 'Viewed rider paper risk queue', tone: 'sky' as Tone },
-  { time: 'Yesterday 22:18', actor: 'Dispatcher', action: 'Opened accident workflow records', tone: 'amber' as Tone },
-  { time: 'Yesterday 17:02', actor: 'System', action: 'Blocked settings edit for Viewer role', tone: 'rose' as Tone },
-];
+interface UserPermissions {
+  dashboard: PermissionLevel;
+  employees: PermissionLevel;
+  vehicles: PermissionLevel;
+  idManager: PermissionLevel;
+  transaction: PermissionLevel;
+  settings: PermissionLevel;
+}
+
+interface UserData {
+  id: string;
+  fullName: string;
+  idNumber: string;
+  phoneNumber: string;
+  roleName: string;
+  username: string;
+  password?: string;
+  profilePicture?: string;
+  permissions: UserPermissions;
+  isOwner?: boolean;
+}
+
+const defaultPermissions = (): UserPermissions => ({
+  dashboard: { view: false, edit: false },
+  employees: { view: false, edit: false },
+  vehicles: { view: false, edit: false },
+  idManager: { view: false, edit: false },
+  transaction: { view: false, edit: false },
+  settings: { view: false, edit: false },
+});
 
 export default function Permissions() {
-  const [activeTab, setActiveTab] = useState<TabKey>('Roles');
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserData | null>(null);
+
+  useEffect(() => {
+    // Load session user and initialize if it's the first time
+    const sessionData = localStorage.getItem('userSession');
+    let sessionUser = null;
+    if (sessionData) {
+      sessionUser = JSON.parse(sessionData);
+    }
+    
+    // Only set initial if empty, in a real app this would fetch from DB
+    const initialUsers: UserData[] = [
+      {
+        id: sessionUser?.id || '1',
+        fullName: sessionUser?.name || 'System Owner',
+        idNumber: 'OWN-001',
+        phoneNumber: sessionUser?.phone || '+1234567890',
+        roleName: 'Owner',
+        username: sessionUser?.email?.split('@')[0] || 'owner_admin',
+        password: 'securepassword', // Don't show real password in UI
+        profilePicture: sessionUser?.profilePicture || '',
+        isOwner: true,
+        permissions: {
+          dashboard: { view: true, edit: true },
+          employees: { view: true, edit: true },
+          vehicles: { view: true, edit: true },
+          idManager: { view: true, edit: true },
+          transaction: { view: true, edit: true },
+          settings: { view: true, edit: true },
+        },
+      },
+    ];
+    setUsers(initialUsers);
+  }, []);
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      setUsers(users.filter((u) => u.id !== id));
+    }
+  };
+
+  const handleSaveUser = (user: UserData) => {
+    if (editingUser) {
+      setUsers(users.map((u) => (u.id === user.id ? user : u)));
+      
+      // If editing the owner, update the session data so Layout header reflects the change
+      if (user.isOwner) {
+        const sessionData = localStorage.getItem('userSession');
+        if (sessionData) {
+          const sessionUser = JSON.parse(sessionData);
+          sessionUser.name = user.fullName;
+          sessionUser.profilePicture = user.profilePicture;
+          localStorage.setItem('userSession', JSON.stringify(sessionUser));
+          
+          // Dispatch event to trigger re-render in Layout
+          window.dispatchEvent(new Event('userSessionUpdated'));
+        }
+      }
+    } else {
+      setUsers([...users, { ...user, id: Date.now().toString() }]);
+    }
+    setIsModalOpen(false);
+    setEditingUser(null);
+  };
+
+  const openAddModal = () => {
+    setEditingUser(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (user: UserData) => {
+    setEditingUser(user);
+    setIsModalOpen(true);
+  };
 
   return (
-    <div className="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.13),transparent_30%),linear-gradient(135deg,#f8fafc_0%,#eefdf7_55%,#fff7ed_100%)] p-4 md:p-6">
-      <div className="mx-auto max-w-7xl space-y-5">
-        <section className="overflow-hidden rounded-[32px] border border-white/20 bg-slate-950 text-white shadow-2xl">
-          <div className="relative p-5 md:p-7">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(16,185,129,0.48),transparent_30%),radial-gradient(circle_at_88%_0%,rgba(251,146,60,0.28),transparent_28%)]" />
-            <div className="relative grid gap-5 lg:grid-cols-[1fr_0.9fr] lg:items-center">
-              <div className="text-center lg:text-left">
-                <p className="inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.28em] text-emerald-100">
-                  <Lock size={13} /> Permission Control
-                </p>
-                <h1 className="mt-3 text-3xl font-black tracking-tight md:text-5xl">
-                  Access Rules Without Guesswork
-                </h1>
-                <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">
-                  Role blueprints, permission matrix, and audit signals are shaped so the backend can later attach real policies without redesigning the UI.
+    <div className="min-h-full bg-slate-50/50 p-4 md:p-8">
+      <div className="mx-auto max-w-7xl space-y-8">
+        
+        {/* Header Section */}
+        <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">Team & Permissions</h1>
+            <p className="mt-1 text-sm text-slate-500">Manage your employees, assign roles, and control access levels.</p>
+          </div>
+          <button 
+            onClick={openAddModal}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+          >
+            <Plus size={18} /> Add User
+          </button>
+        </header>
+
+        {/* User Cards Grid */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {users.map((user) => (
+            <UserCard 
+              key={user.id} 
+              user={user} 
+              onEdit={() => openEditModal(user)} 
+              onDelete={() => handleDelete(user.id)} 
+            />
+          ))}
+        </div>
+
+      </div>
+
+      {/* User Modal */}
+      {isModalOpen && (
+        <UserModal 
+          user={editingUser}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingUser(null);
+          }} 
+          onSave={handleSaveUser} 
+        />
+      )}
+    </div>
+  );
+}
+
+function UserCard({ user, onEdit, onDelete }: { user: UserData, onEdit: () => void, onDelete: () => void }) {
+  return (
+    <div className="relative flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+      {user.isOwner && (
+        <div className="absolute top-4 right-4 rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+          Owner
+        </div>
+      )}
+      
+      <div className="flex items-center gap-4">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-slate-100 bg-slate-50 text-slate-400">
+          {user.profilePicture ? (
+            <img src={user.profilePicture} alt={user.fullName} className="h-full w-full object-cover" />
+          ) : (
+            <UserIcon size={28} />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-lg font-bold text-slate-900">{user.fullName}</h3>
+          <p className="text-sm font-medium text-emerald-600">{user.roleName}</p>
+          <p className="mt-1 truncate text-xs text-slate-500">ID: {user.idNumber}</p>
+        </div>
+      </div>
+
+      <div className="mt-6 flex-1 space-y-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Login Info</p>
+          <p className="text-sm font-medium text-slate-700">@{user.username}</p>
+        </div>
+        
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Key Permissions</p>
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(user.permissions) as ModuleKey[]).map(key => {
+              const perm = user.permissions[key];
+              if (perm.view || perm.edit) {
+                return (
+                  <span key={key} className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                    <Shield size={12} className="text-emerald-500" />
+                    {moduleNames[key]}
+                  </span>
+                );
+              }
+              return null;
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 flex items-center gap-2 border-t border-slate-100 pt-4">
+        <button 
+          onClick={onEdit}
+          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+        >
+          <Edit2 size={16} /> Edit
+        </button>
+        {!user.isOwner && (
+          <button 
+            onClick={onDelete}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100"
+          >
+            <Trash2 size={16} /> Delete
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function UserModal({ user, onClose, onSave }: { user: UserData | null, onClose: () => void, onSave: (user: UserData) => void }) {
+  const [formData, setFormData] = useState<UserData>(user || {
+    id: '',
+    fullName: '',
+    idNumber: '',
+    phoneNumber: '',
+    roleName: '',
+    username: '',
+    password: '',
+    profilePicture: '',
+    permissions: defaultPermissions(),
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleChange = (field: keyof UserData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handlePermissionChange = (module: ModuleKey, type: 'view' | 'edit', checked: boolean) => {
+    if (formData.isOwner) return; // Prevent changing owner permissions
+    
+    setFormData(prev => {
+      const newPerms = { ...prev.permissions };
+      newPerms[module] = { ...newPerms[module], [type]: checked };
+      
+      // If edit is true, view must be true
+      if (type === 'edit' && checked) {
+        newPerms[module].view = true;
+      }
+      // If view is false, edit must be false
+      if (type === 'view' && !checked) {
+        newPerms[module].edit = false;
+      }
+      
+      return { ...prev, permissions: newPerms };
+    });
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        handleChange('profilePicture', reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 sm:p-6 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-3xl rounded-2xl bg-white shadow-2xl my-auto">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/95 px-6 py-4 backdrop-blur">
+          <h2 className="text-xl font-bold text-slate-900">{user ? 'Edit User details' : 'Add New User'}</h2>
+          <button onClick={onClose} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+            <X size={20} />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="grid gap-8 lg:grid-cols-2">
+            
+            {/* Left Col - Details */}
+            <div className="space-y-6">
+              
+              {/* Profile Pic */}
+              <div className="flex flex-col items-center gap-3 rounded-xl border border-slate-200 p-4 text-center bg-slate-50/50">
+                <div className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-slate-200 shadow-md group">
+                  {formData.profilePicture ? (
+                    <img src={formData.profilePicture} alt="Preview" className="h-full w-full object-cover" />
+                  ) : (
+                    <UserIcon size={32} className="text-slate-400" />
+                  )}
+                  <button 
+                    type="button" 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 inset-x-0 bg-black/40 py-1 text-white hover:bg-black/60 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Camera size={14} />
+                  </button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleImageUpload} 
+                    accept="image/*" 
+                    className="hidden" 
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-700">Profile Picture</p>
+                  <p className="text-xs text-slate-500">Upload a photo for the user</p>
+                </div>
+              </div>
+
+              {/* Personal Info */}
+              <div className="space-y-4 rounded-xl border border-slate-200 p-5">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Personal Information</h3>
+                
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Full Name</label>
+                  <input required type="text" value={formData.fullName} onChange={(e) => handleChange('fullName', e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="e.g. John Doe" />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">ID Number</label>
+                    <input required type="text" value={formData.idNumber} onChange={(e) => handleChange('idNumber', e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="e.g. EMP-001" />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">Phone Number</label>
+                    <input required type="tel" value={formData.phoneNumber} onChange={(e) => handleChange('phoneNumber', e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="+1234567890" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Role Title</label>
+                  <input required type="text" value={formData.roleName} onChange={(e) => handleChange('roleName', e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="e.g. Dispatcher, Accountant" disabled={formData.isOwner} />
+                </div>
+              </div>
+
+              {/* Login Info */}
+              <div className="space-y-4 rounded-xl border border-slate-200 p-5 bg-slate-50/50">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Login Credentials</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">Username</label>
+                    <input required type="text" value={formData.username} onChange={(e) => handleChange('username', e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="user_name" disabled={formData.isOwner} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">Password</label>
+                    <input required={!formData.isOwner} type="password" value={formData.password} onChange={(e) => handleChange('password', e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="••••••••" disabled={formData.isOwner} />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Right Col - Permissions */}
+            <div className={`rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col h-full ${formData.isOwner ? 'opacity-70 pointer-events-none' : ''}`}>
+              <div className="border-b border-slate-100 p-5 bg-slate-50 rounded-t-xl">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Page Permissions</h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  {formData.isOwner ? 'Owner has full access to all pages.' : 'Select what this user can view and edit.'}
                 </p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <HeroStat label="Roles" value={roleBlueprints.length.toString()} />
-                <HeroStat label="Modules" value={permissionMatrix.length.toString()} />
-                <HeroStat label="Locked" value="1" />
+              
+              <div className="p-2 flex-1">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-slate-500">
+                      <th className="px-4 py-3 font-semibold">Page Name</th>
+                      <th className="px-4 py-3 font-semibold text-center w-24">Viewer</th>
+                      <th className="px-4 py-3 font-semibold text-center w-24">Editor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(Object.keys(moduleNames) as ModuleKey[]).map((module) => (
+                      <tr key={module} className="border-b border-slate-50 last:border-none hover:bg-slate-50/50 transition">
+                        <td className="px-4 py-3.5 font-medium text-slate-800">{moduleNames[module]}</td>
+                        <td className="px-4 py-3.5 text-center">
+                          <label className="inline-flex cursor-pointer items-center justify-center p-1">
+                            <input 
+                              type="checkbox" 
+                              checked={formData.permissions[module].view}
+                              onChange={(e) => handlePermissionChange(module, 'view', e.target.checked)}
+                              className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer disabled:opacity-50" 
+                              disabled={formData.isOwner}
+                            />
+                          </label>
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <label className="inline-flex cursor-pointer items-center justify-center p-1">
+                            <input 
+                              type="checkbox" 
+                              checked={formData.permissions[module].edit}
+                              onChange={(e) => handlePermissionChange(module, 'edit', e.target.checked)}
+                              className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer disabled:opacity-50" 
+                              disabled={formData.isOwner}
+                            />
+                          </label>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
+
           </div>
-        </section>
 
-        <section className="flex flex-col gap-3 rounded-[28px] border border-white bg-white/90 p-3 shadow-sm backdrop-blur md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap justify-center gap-2 md:justify-start">
-            {(['Roles', 'Matrix', 'Audit'] as TabKey[]).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`rounded-2xl px-4 py-2 text-xs font-black uppercase tracking-[0.16em] transition ${
-                  activeTab === tab
-                    ? 'bg-slate-950 text-white shadow-lg shadow-slate-900/10'
-                    : 'bg-slate-100 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
+          <div className="sticky bottom-0 mt-8 flex items-center justify-end gap-3 border-t border-slate-100 bg-white pt-5">
+            <button 
+              type="button"
+              onClick={onClose}
+              className="rounded-lg px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 transition"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              className="rounded-lg bg-emerald-600 px-8 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+            >
+              Save User Details
+            </button>
           </div>
-          <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-2.5 text-xs font-black text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-600">
-            <Plus size={15} /> New Role
-          </button>
-        </section>
-
-        {activeTab === 'Roles' && <RolesView />}
-        {activeTab === 'Matrix' && <MatrixView />}
-        {activeTab === 'Audit' && <AuditView />}
-      </div>
-    </div>
-  );
-}
-
-function RolesView() {
-  return (
-    <div className="grid gap-4 xl:grid-cols-[1fr_0.45fr]">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {roleBlueprints.map((role) => (
-          <RoleCard key={role.name} role={role} />
-        ))}
-      </div>
-      <div className="space-y-4">
-        <PolicyCard icon={<KeyRound size={19} />} title="Least Privilege" text="Each role starts narrow, then earns extra access only when the work needs it." tone="emerald" />
-        <PolicyCard icon={<AlertTriangle size={19} />} title="Risk Guard" text="Settings and finance actions stay protected from read-only and dispatcher accounts." tone="amber" />
-        <PolicyCard icon={<Eye size={19} />} title="Audit Friendly" text="Every sensitive action is ready to be logged with actor, time, module, and result." tone="sky" />
-      </div>
-    </div>
-  );
-}
-
-function MatrixView() {
-  return (
-    <div className="overflow-hidden rounded-[30px] border border-white bg-white/95 shadow-sm">
-      <div className="border-b border-slate-100 p-5 text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-600">
-          Permission Matrix
-        </p>
-        <h2 className="text-xl font-black text-slate-900">Module Access By Role</h2>
-      </div>
-      <div className="overflow-auto">
-        <table className="min-w-[760px] w-full border-collapse text-left text-sm">
-          <thead className="sticky top-0 z-10 bg-slate-950 text-white shadow-sm">
-            <tr>
-              {['Sl.', 'Module', 'Owner', 'Admin', 'Dispatcher', 'Accountant', 'Viewer'].map((heading) => (
-                <th key={heading} className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.16em]">
-                  {heading}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {permissionMatrix.map((row, index) => {
-              const Icon = row.icon;
-              return (
-                <tr key={row.module} className="bg-white transition hover:bg-emerald-50/40">
-                  <td className="px-4 py-4 text-xs font-black text-slate-400">{index + 1}</td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
-                        <Icon size={16} />
-                      </span>
-                      <span className="font-black text-slate-900">{row.module}</span>
-                    </div>
-                  </td>
-                  <PermissionCell enabled={row.owner} />
-                  <PermissionCell enabled={row.admin} />
-                  <PermissionCell enabled={row.dispatcher} />
-                  <PermissionCell enabled={row.accountant} />
-                  <PermissionCell enabled={row.viewer} />
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function AuditView() {
-  return (
-    <div className="grid gap-4 lg:grid-cols-[0.75fr_1.25fr]">
-      <div className="rounded-[30px] border border-white bg-white/95 p-5 text-center shadow-sm">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-950 text-emerald-300 shadow-lg shadow-slate-900/10">
-          <Clock size={23} />
-        </div>
-        <h2 className="mt-4 text-xl font-black text-slate-900">Security Timeline</h2>
-        <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-500">
-          This view is designed for real audit logs later: actor, time, action, module, and blocked attempts.
-        </p>
-      </div>
-      <div className="space-y-3">
-        {auditLogs.map((log) => (
-          <AuditRow key={`${log.time}-${log.action}`} log={log} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function HeroStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[24px] border border-white/10 bg-white/10 p-4 text-center backdrop-blur">
-      <p className="text-3xl font-black text-white">{value}</p>
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">{label}</p>
-    </div>
-  );
-}
-
-function RoleCard({
-  role,
-}: {
-  role: (typeof roleBlueprints)[number];
-}) {
-  const toneClass = {
-    emerald: 'border-emerald-100 bg-emerald-50 text-emerald-700',
-    sky: 'border-sky-100 bg-sky-50 text-sky-700',
-    amber: 'border-amber-100 bg-amber-50 text-amber-700',
-    rose: 'border-rose-100 bg-rose-50 text-rose-700',
-    slate: 'border-slate-100 bg-slate-50 text-slate-700',
-  }[role.tone];
-
-  return (
-    <div className="rounded-[30px] border border-white bg-white/95 p-5 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-      <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-3xl border ${toneClass}`}>
-        <Shield size={22} />
-      </div>
-      <h3 className="mt-4 text-xl font-black text-slate-900">{role.name}</h3>
-      <p className="mt-1 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
-        {role.users} users assigned
-      </p>
-      <p className="mt-3 min-h-16 text-sm font-semibold leading-relaxed text-slate-500">
-        {role.description}
-      </p>
-      <div className="mt-4 flex flex-wrap justify-center gap-2">
-        {role.scope.map((item) => (
-          <span key={item} className="rounded-full border border-slate-100 bg-slate-50 px-3 py-1 text-[11px] font-black text-slate-600">
-            {item}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PolicyCard({ icon, title, text, tone }: { icon: ReactNode; title: string; text: string; tone: Tone }) {
-  const toneClass = {
-    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    sky: 'bg-sky-50 text-sky-700 border-sky-100',
-    amber: 'bg-amber-50 text-amber-700 border-amber-100',
-    rose: 'bg-rose-50 text-rose-700 border-rose-100',
-    slate: 'bg-slate-50 text-slate-700 border-slate-100',
-  }[tone];
-
-  return (
-    <div className="rounded-[28px] border border-white bg-white/95 p-5 text-center shadow-sm">
-      <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border ${toneClass}`}>
-        {icon}
-      </div>
-      <p className="mt-3 text-sm font-black uppercase tracking-[0.18em] text-slate-800">{title}</p>
-      <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-500">{text}</p>
-    </div>
-  );
-}
-
-function PermissionCell({ enabled }: { enabled: boolean }) {
-  return (
-    <td className="px-4 py-4">
-      <span className={`inline-flex h-9 w-9 items-center justify-center rounded-2xl border ${enabled ? 'border-emerald-100 bg-emerald-50 text-emerald-600' : 'border-slate-100 bg-slate-50 text-slate-300'}`}>
-        {enabled ? <CheckCircle size={17} /> : <XCircle size={17} />}
-      </span>
-    </td>
-  );
-}
-
-function AuditRow({ log }: { log: (typeof auditLogs)[number] }) {
-  const toneClass = {
-    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    sky: 'bg-sky-50 text-sky-700 border-sky-100',
-    amber: 'bg-amber-50 text-amber-700 border-amber-100',
-    rose: 'bg-rose-50 text-rose-700 border-rose-100',
-    slate: 'bg-slate-50 text-slate-700 border-slate-100',
-  }[log.tone];
-
-  return (
-    <div className="rounded-[26px] border border-white bg-white/95 p-4 shadow-sm">
-      <div className="flex items-start gap-3">
-        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${toneClass}`}>
-          <Clock size={16} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-black text-slate-900">{log.actor}</p>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-500">
-              {log.time}
-            </span>
-          </div>
-          <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-500">{log.action}</p>
-        </div>
+        </form>
       </div>
     </div>
   );
