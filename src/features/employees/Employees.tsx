@@ -257,7 +257,7 @@ export default function Employees() {
 
   return (
     <div className="ars-page h-full flex flex-col">
-      <div className="sticky top-0 z-10 px-3 py-3 md:px-4">
+      <div className="sticky top-0 z-10 px-2.5 py-2.5 md:px-4 md:py-3">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div className="order-2 flex items-center gap-2 overflow-x-auto scrollbar-hide ars-toolbar-dock xl:order-2">
             <button
@@ -286,17 +286,17 @@ export default function Employees() {
             ))}
           </div>
 
-          <div className="order-1 flex items-center gap-3 xl:order-1">
-            <button className="ars-primary-button shrink-0 rounded-xl px-3.5 py-2 text-sm font-black flex items-center gap-1.5">
-              <UserPlus size={17} /> Add
+          <div className="order-1 hidden items-center gap-2 sm:flex xl:order-1">
+            <button className="ars-primary-button flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black sm:px-3.5 sm:text-sm">
+              <UserPlus size={15} className="sm:h-[17px] sm:w-[17px]" /> Add
             </button>
 
             <div className="relative">
               <button
                 onClick={() => setOpenSort((prev) => !prev)}
-                className="ars-glass-button shrink-0 rounded-xl px-3.5 py-2 text-sm font-black flex items-center gap-1.5 hover:text-emerald-700"
+                className="ars-glass-button flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black hover:text-emerald-700 sm:px-3.5 sm:text-sm"
               >
-                <ArrowUpDown size={17} /> Sort
+                <ArrowUpDown size={15} className="sm:h-[17px] sm:w-[17px]" /> Sort
               </button>
               {openSort && (
                 <div
@@ -326,8 +326,8 @@ export default function Employees() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto px-3 pb-4 md:px-4">
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(330px,1fr))] gap-3">
+      <div className="flex-1 overflow-auto px-2.5 pb-4 md:px-4">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-[repeat(auto-fit,minmax(330px,1fr))] sm:gap-3">
           {filteredAndSorted.map((emp) => {
             const notificationIssues = getNotificationIssues(emp);
             const paperIssues = getPaperIssues(emp);
@@ -338,7 +338,7 @@ export default function Employees() {
               <div
                 key={emp.id}
                 onClick={() => openDetails(emp.id)}
-                className={`ars-list-card min-h-[126px] p-3 cursor-pointer relative ${statusCardAura[emp.status]}`}
+                className={`ars-list-card min-h-[112px] cursor-pointer p-2.5 sm:min-h-[126px] sm:p-3 relative ${statusCardAura[emp.status]}`}
               >
                 <div className="flex items-start gap-3">
                   <div className="relative shrink-0">
@@ -368,7 +368,7 @@ export default function Employees() {
 
                   <div className="flex-1 min-w-0">
                     <h3
-                      className="font-black text-slate-900 text-base leading-tight truncate"
+                      className="truncate text-sm font-black leading-tight text-slate-900 sm:text-base"
                       onClick={() => openDetails(emp.id)}
                     >
                       {displayName}
@@ -428,7 +428,7 @@ export default function Employees() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-2">
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4">
                   <button
                     onClick={(e) => handleCall(emp.phoneNo, e)}
                     className="ars-glass-button flex items-center justify-center text-slate-600 py-2 rounded-full transition-colors hover:text-emerald-700"
@@ -454,6 +454,41 @@ export default function Employees() {
             <p className="text-slate-400 text-sm">No employees found</p>
           </div>
         )}
+      </div>
+
+      <div className="ars-mobile-fab-group sm:hidden">
+        {openSort && (
+          <div className="ars-floating-menu w-48 rounded-2xl border border-slate-100 py-1 shadow-lg">
+            {sortOptions.map((option) => (
+              <button
+                key={option.key}
+                onClick={() => {
+                  setSortBy(option.key);
+                  setOpenSort(false);
+                }}
+                className={`w-full px-3 py-2 text-left text-xs ${
+                  sortBy === option.key
+                    ? 'font-black text-emerald-700'
+                    : 'font-semibold text-slate-600'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <button
+          onClick={() => setOpenSort((prev) => !prev)}
+          className="ars-mobile-fab ars-mobile-fab-secondary"
+          aria-label="Sort employees"
+        >
+          <ArrowUpDown size={16} />
+          Sort
+        </button>
+        <button className="ars-mobile-fab" aria-label="Add employee">
+          <UserPlus size={17} />
+          Add
+        </button>
       </div>
     </div>
   );

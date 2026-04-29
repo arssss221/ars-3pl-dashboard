@@ -377,7 +377,7 @@ export default function Transaction() {
 
   return (
     <div className="ars-page h-full overflow-auto p-3 md:p-4">
-      <div className="mb-3 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2.5">
+      <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-[repeat(auto-fit,minmax(150px,1fr))] sm:gap-2.5">
         <SummaryCard
           label="Total People"
           value={`${totalPeople}`}
@@ -403,7 +403,7 @@ export default function Transaction() {
           tone={totalBalance > 0 ? 'amber' : 'emerald'}
         />
 
-        <div className="ars-card rounded-2xl p-3">
+        <div className="ars-card hidden rounded-2xl p-3 sm:block">
           <button
             onClick={() => setIsDrawerOpen(true)}
             className="ars-primary-button w-full px-3 py-2 rounded-xl text-sm font-black flex items-center justify-center gap-1.5"
@@ -588,6 +588,30 @@ export default function Transaction() {
             <p className="text-sm text-slate-400">No transactions found</p>
           </div>
         )}
+      </div>
+
+      <div className="ars-mobile-fab-group sm:hidden">
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="ars-mobile-fab-select"
+          aria-label="Filter category"
+        >
+          <option value="All">Category</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={() => setIsDrawerOpen(true)}
+          className="ars-mobile-fab"
+          aria-label="Add transaction"
+        >
+          <Plus size={17} />
+          Add
+        </button>
       </div>
 
       {isDrawerOpen && (
@@ -875,12 +899,12 @@ function SummaryCard({
   }[tone];
 
   return (
-    <div className={`ars-card rounded-2xl px-3 py-3 text-center ${toneClass}`}>
-      <div className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider">
+    <div className={`ars-card rounded-full px-3 py-2 sm:rounded-2xl sm:py-3 text-center ${toneClass}`}>
+      <div className="flex items-center justify-center gap-1.5 text-[10px] font-black uppercase sm:gap-2 sm:text-xs sm:tracking-wider">
         {icon}
         {label}
       </div>
-      <p dir="ltr" className="mt-1 text-base font-black text-slate-800">
+      <p dir="ltr" className="mt-0.5 text-sm font-black text-slate-800 sm:mt-1 sm:text-base">
         {value}
       </p>
     </div>

@@ -4,10 +4,7 @@
 
 @layer components {
   .ars-app-shell {
-    background:
-      radial-gradient(circle at 16% 10%, rgba(45, 212, 191, 0.14), transparent 28%),
-      radial-gradient(circle at 78% 2%, rgba(59, 130, 246, 0.1), transparent 30%),
-      linear-gradient(135deg, #eaf8f5 0%, #eef5ff 46%, #f8fbf7 100%);
+    background: #eef8f7;
     color: #0f172a;
   }
 
@@ -20,19 +17,15 @@
   }
 
   .ars-sidebar-shell {
-    background:
-      linear-gradient(180deg, rgba(10, 19, 33, 0.94), rgba(12, 20, 35, 0.88)),
-      radial-gradient(circle at top, rgba(52, 211, 153, 0.12), transparent 35%);
+    background: #172233;
     border-inline-end: 1px solid rgba(148, 163, 184, 0.16);
-    box-shadow: 22px 0 70px -55px rgba(0, 0, 0, 0.82);
-    backdrop-filter: blur(24px);
+    box-shadow: 8px 0 24px -22px rgba(0, 0, 0, 0.45);
   }
 
   .ars-header-shell {
-    background: rgba(245, 250, 252, 0.76);
+    background: rgba(248, 252, 252, 0.96);
     border-bottom: 1px solid rgba(148, 163, 184, 0.22);
-    box-shadow: 0 20px 60px -52px rgba(15, 23, 42, 0.52);
-    backdrop-filter: blur(22px);
+    box-shadow: 0 8px 22px -20px rgba(15, 23, 42, 0.42);
   }
 
   .dark .ars-header-shell {
@@ -41,10 +34,7 @@
   }
 
   .ars-main-surface {
-    background:
-      radial-gradient(circle at 18% 0%, rgba(45, 212, 191, 0.1), transparent 26%),
-      radial-gradient(circle at 92% 12%, rgba(59, 130, 246, 0.08), transparent 25%),
-      linear-gradient(135deg, rgba(239, 250, 247, 0.92), rgba(242, 247, 255, 0.92));
+    background: linear-gradient(135deg, rgba(239, 250, 247, 0.92), rgba(242, 247, 255, 0.92));
   }
 
   .dark .ars-main-surface {
@@ -69,10 +59,9 @@
   .ars-list-card,
   .ars-table-shell,
   .ars-toolbar-dock {
-    background: rgba(255, 255, 255, 0.56);
+    background: rgba(255, 255, 255, 0.78);
     border: 1px solid rgba(148, 163, 184, 0.2);
-    box-shadow: 0 24px 70px -54px rgba(15, 23, 42, 0.62);
-    backdrop-filter: blur(22px);
+    box-shadow: 0 10px 28px -24px rgba(15, 23, 42, 0.42);
   }
 
   .dark .ars-glass-panel,
@@ -105,9 +94,7 @@
 
   .ars-list-card:hover {
     transform: translateY(-1px);
-    box-shadow:
-      0 0 0 1px rgba(16, 185, 129, 0.16),
-      0 28px 75px -48px rgba(16, 185, 129, 0.5);
+    box-shadow: 0 12px 30px -26px rgba(16, 185, 129, 0.45);
   }
 
   .dark .ars-list-card:hover {
@@ -120,11 +107,9 @@
   .ars-filter-pill,
   .ars-header-icon,
   .ars-search-pill {
-    background: rgba(255, 255, 255, 0.58);
+    background: rgba(255, 255, 255, 0.9);
     border: 1px solid rgba(148, 163, 184, 0.26);
     color: #334155;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
-    backdrop-filter: blur(18px);
   }
 
   .dark .ars-glass-button,
@@ -203,15 +188,277 @@
   }
 
   .ars-drawer-panel {
-    background: rgba(248, 251, 252, 0.86);
+    background: rgba(248, 251, 252, 0.98);
     border-inline-start: 1px solid rgba(148, 163, 184, 0.22);
-    box-shadow: -28px 0 80px -52px rgba(15, 23, 42, 0.7);
-    backdrop-filter: blur(24px);
+    box-shadow: -14px 0 34px -28px rgba(15, 23, 42, 0.55);
   }
 
   .dark .ars-drawer-panel {
     background: rgba(13, 23, 39, 0.92) !important;
     border-color: rgba(148, 163, 184, 0.18) !important;
+  }
+
+  .ars-mobile-bottom-nav {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 35;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.25rem;
+    padding: 0.42rem 0.55rem calc(0.42rem + env(safe-area-inset-bottom));
+    background: rgba(248, 251, 252, 0.92);
+    border-top: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow: 0 -8px 24px -22px rgba(15, 23, 42, 0.55);
+  }
+
+  .ars-mobile-nav-item {
+    position: relative;
+    min-width: 0;
+  }
+
+  .ars-mobile-bottom-nav button {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    height: 3rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.16rem;
+    border-radius: 0.9rem;
+    color: #64748b;
+    font-size: 0.66rem;
+    font-weight: 900;
+    line-height: 1;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      transform 160ms ease;
+  }
+
+  .ars-mobile-bottom-nav button.active {
+    background: #0f172a;
+    color: #a7f3d0;
+    box-shadow: 0 8px 18px -16px rgba(15, 23, 42, 0.8);
+  }
+
+  .ars-mobile-nav-popup {
+    position: absolute;
+    inset-inline: 0;
+    bottom: calc(100% + 0.5rem);
+    display: grid;
+    gap: 0.35rem;
+    border-radius: 0.9rem;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(255, 255, 255, 0.98);
+    padding: 0.35rem;
+    box-shadow: 0 12px 26px -22px rgba(15, 23, 42, 0.7);
+  }
+
+  .ars-mobile-nav-popup button {
+    height: 2.25rem;
+    min-height: 2.25rem;
+    border-radius: 0.65rem;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 0.62rem;
+    font-weight: 950;
+  }
+
+  .ars-mobile-menu-panel {
+    position: fixed;
+    inset-inline: 0.75rem;
+    bottom: calc(4.3rem + env(safe-area-inset-bottom));
+    z-index: 45;
+    border-radius: 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    background: rgba(255, 255, 255, 0.96);
+    padding: 0.6rem;
+    box-shadow: 0 24px 70px -44px rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(22px);
+  }
+
+  .ars-mobile-menu-panel button {
+    min-height: 2.65rem;
+    border-radius: 0.78rem;
+    background: rgba(241, 245, 249, 0.74);
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-align: center;
+  }
+
+  .ars-mobile-fab-group {
+    position: fixed;
+    inset-inline-end: 0.8rem;
+    bottom: calc(4.65rem + env(safe-area-inset-bottom));
+    z-index: 34;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
+
+  .ars-mobile-fab {
+    display: inline-flex;
+    min-height: 2.9rem;
+    min-width: 2.9rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.42rem;
+    border-radius: 999px;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+    box-shadow: 0 10px 24px -18px rgba(5, 150, 105, 0.75);
+    font-size: 0.78rem;
+    font-weight: 950;
+    line-height: 1;
+  }
+
+  .ars-mobile-fab-secondary {
+    background: rgba(255, 255, 255, 0.96);
+    color: #334155;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 8px 22px -18px rgba(15, 23, 42, 0.58);
+  }
+
+  .ars-mobile-fab-select {
+    width: 7.25rem;
+    min-height: 2.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    background: rgba(255, 255, 255, 0.96);
+    padding: 0 0.9rem;
+    color: #334155;
+    box-shadow: 0 8px 22px -18px rgba(15, 23, 42, 0.58);
+    font-size: 0.76rem;
+    font-weight: 900;
+    outline: none;
+  }
+
+  .dark .ars-mobile-bottom-nav {
+    background: rgba(10, 19, 33, 0.94) !important;
+    border-top-color: rgba(148, 163, 184, 0.18) !important;
+  }
+
+  .dark .ars-mobile-bottom-nav button.active {
+    background: #153426;
+    color: #bbf7d0;
+  }
+
+  .dark .ars-mobile-menu-panel {
+    background: rgba(17, 29, 48, 0.98) !important;
+    border-color: rgba(148, 163, 184, 0.2) !important;
+  }
+
+  .dark .ars-mobile-menu-panel button {
+    background: rgba(30, 41, 59, 0.82) !important;
+    color: #dbe4ef !important;
+  }
+
+  .dark .ars-mobile-nav-popup {
+    background: rgba(17, 29, 48, 0.98) !important;
+    border-color: rgba(148, 163, 184, 0.2) !important;
+  }
+
+  .dark .ars-mobile-nav-popup button {
+    background: rgba(30, 41, 59, 0.92) !important;
+    color: #dbe4ef !important;
+  }
+
+  .dark .ars-mobile-fab-secondary,
+  .dark .ars-mobile-fab-select {
+    background: rgba(17, 29, 48, 0.96) !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    color: #dbe4ef !important;
+  }
+
+  @media (max-width: 767px) {
+    .ars-app-shell {
+      background:
+        radial-gradient(circle at 8% 0%, rgba(45, 212, 191, 0.1), transparent 24%),
+        linear-gradient(180deg, #eff8f6 0%, #f8fbff 100%);
+    }
+
+    .ars-header-shell {
+      min-width: 0;
+      box-shadow: 0 14px 38px -34px rgba(15, 23, 42, 0.52);
+    }
+
+    .ars-header-icon {
+      height: 2.05rem;
+      min-width: 2.05rem;
+    }
+
+    .ars-language-toggle {
+      min-width: 3.85rem;
+      gap: 0.28rem;
+      padding-inline: 0.55rem;
+    }
+
+    .ars-page {
+      min-width: 0;
+      overflow-x: hidden;
+    }
+
+    .ars-page > section,
+    .ars-page > div,
+    main > section {
+      max-width: 100%;
+    }
+
+    .ars-glass-panel,
+    .ars-card,
+    .ars-list-card,
+    .ars-table-shell {
+      border-radius: 0.9rem;
+      box-shadow: 0 14px 36px -30px rgba(15, 23, 42, 0.48);
+    }
+
+    .ars-toolbar-dock {
+      width: 100%;
+      border-radius: 0.9rem;
+      padding: 0.25rem;
+      overflow-x: auto;
+    }
+
+    .ars-filter-pill {
+      padding: 0.38rem 0.58rem;
+      font-size: 0.66rem;
+      line-height: 1.05;
+    }
+
+    .ars-list-card {
+      min-height: auto;
+      padding: 0.7rem;
+    }
+
+    .ars-table-shell {
+      overflow: hidden;
+    }
+
+    .ars-table-shell table {
+      min-width: 42rem;
+      font-size: 0.76rem;
+    }
+
+    .ars-table-shell th,
+    .ars-table-shell td {
+      padding: 0.55rem 0.65rem !important;
+      white-space: nowrap;
+    }
+
+    .ars-drawer-panel {
+      width: 100% !important;
+      max-width: none !important;
+      border-inline-start: 0;
+    }
+
+    .ars-floating-menu {
+      max-width: calc(100vw - 1rem);
+    }
   }
 }
 

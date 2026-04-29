@@ -170,6 +170,9 @@ export default function Layout() {
   const [isCollapsed, setIsCollapsed] = useState(!shouldExpandSidebar());
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [mobilePopup, setMobilePopup] = useState<
+    'vehicles' | 'transaction' | 'reports' | null
+  >(null);
   const [themeMode, setThemeMode] = useState<ThemeMode>(() =>
     localStorage.getItem('ars-theme') === 'dark' ? 'dark' : 'light'
   );
@@ -295,6 +298,10 @@ export default function Layout() {
   const isTransactionActive = location.pathname.startsWith('/transaction');
   const isProgressReportActive = location.pathname.startsWith('/progress-report');
   const isAccountsSalaryActive = location.pathname.startsWith('/accounts-salary');
+  const closeMobileMenu = () => setMobilePopup(null);
+  const toggleMobilePopup = (
+    menu: 'vehicles' | 'transaction' | 'reports'
+  ) => setMobilePopup((prev) => (prev === menu ? null : menu));
   const notificationSummary = {
     paperRisks: employeeSeeds.filter(
       (employee) =>
@@ -480,7 +487,7 @@ export default function Layout() {
     >
       {/* Sidebar */}
       <div
-        className={`ars-sidebar-shell text-white flex flex-col transition-all duration-300 ease-in-out shrink-0 z-20 ${
+        className={`ars-sidebar-shell hidden text-white md:flex flex-col transition-all duration-300 ease-in-out shrink-0 z-20 ${
           isCollapsed ? 'w-16' : 'w-64'
         }`}
       >
@@ -733,32 +740,202 @@ export default function Layout() {
               )}
             </div>
           )}
+
+          <div
+            className={`rounded-2xl transition-all ${
+              isProgressReportActive
+                ? 'bg-slate-800/80 p-1.5 shadow-[0_0_0_1px_rgba(16,185,129,0.18),0_12px_34px_-24px_rgba(16,185,129,0.95)] ring-1 ring-emerald-400/20'
+                : 'space-y-1'
+            }`}
+          >
+            <button
+              onClick={() => {
+                navigate('/progress-report');
+                setOpenSubmenu('progress-report');
+              }}
+              className={`w-full flex rounded-2xl font-black transition-all ${
+                isProgressReportActive
+                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-[0_18px_38px_-26px_rgba(16,185,129,0.9)]'
+                  : 'text-slate-400 hover:bg-white/7 hover:text-white'
+              } ${
+                isCollapsed
+                  ? 'flex-col items-center justify-center py-2.5'
+                  : 'items-center justify-between px-3 py-2.5'
+              }`}
+            >
+              <div
+                className={`flex items-center ${
+                  isCollapsed ? 'flex-col' : 'gap-3'
+                }`}
+              >
+                <ChartColumn size={18} />
+                {!isCollapsed && <span className="text-sm">Progress Report</span>}
+              </div>
+              {!isCollapsed && (
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform ${
+                    openSubmenu === 'progress-report' ? 'rotate-180' : ''
+                  }`}
+                />
+              )}
+            </button>
+            {openSubmenu === 'progress-report' && (
+              <div
+                className={`mt-1 space-y-1 ${
+                  isCollapsed ? 'flex flex-col items-center' : 'pl-9'
+                }`}
+              >
+                <NavLink
+                  to="/progress-report/daily-report"
+                  className={({ isActive }) =>
+                    `flex rounded-md transition-all text-xs ${
+                      isCollapsed
+                        ? 'justify-center p-2'
+                        : 'items-center gap-2 py-1.5 px-2'
+                    } ${
+                      isActive
+                        ? 'text-emerald-300 bg-slate-900/60'
+                        : 'text-slate-400 hover:text-emerald-300'
+                    }`
+                  }
+                >
+                  <CalendarDays size={16} />
+                  {!isCollapsed && <span>Daily Report</span>}
+                </NavLink>
+                <NavLink
+                  to="/progress-report/monthly-report"
+                  className={({ isActive }) =>
+                    `flex rounded-md transition-all text-xs ${
+                      isCollapsed
+                        ? 'justify-center p-2'
+                        : 'items-center gap-2 py-1.5 px-2'
+                    } ${
+                      isActive
+                        ? 'text-emerald-300 bg-slate-900/60'
+                        : 'text-slate-400 hover:text-emerald-300'
+                    }`
+                  }
+                >
+                  <CalendarRange size={16} />
+                  {!isCollapsed && <span>Monthly Report</span>}
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          <div
+            className={`rounded-2xl transition-all ${
+              isAccountsSalaryActive
+                ? 'bg-slate-800/80 p-1.5 shadow-[0_0_0_1px_rgba(16,185,129,0.18),0_12px_34px_-24px_rgba(16,185,129,0.95)] ring-1 ring-emerald-400/20'
+                : 'space-y-1'
+            }`}
+          >
+            <button
+              onClick={() => {
+                navigate('/accounts-salary');
+                setOpenSubmenu('accounts-salary');
+              }}
+              className={`w-full flex rounded-2xl font-black transition-all ${
+                isAccountsSalaryActive
+                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-[0_18px_38px_-26px_rgba(16,185,129,0.9)]'
+                  : 'text-slate-400 hover:bg-white/7 hover:text-white'
+              } ${
+                isCollapsed
+                  ? 'flex-col items-center justify-center py-2.5'
+                  : 'items-center justify-between px-3 py-2.5'
+              }`}
+            >
+              <div
+                className={`flex items-center ${
+                  isCollapsed ? 'flex-col' : 'gap-3'
+                }`}
+              >
+                <HandCoins size={18} />
+                {!isCollapsed && (
+                  <span className="text-sm">Accounts and Salary</span>
+                )}
+              </div>
+              {!isCollapsed && (
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform ${
+                    openSubmenu === 'accounts-salary' ? 'rotate-180' : ''
+                  }`}
+                />
+              )}
+            </button>
+            {openSubmenu === 'accounts-salary' && (
+              <div
+                className={`mt-1 space-y-1 ${
+                  isCollapsed ? 'flex flex-col items-center' : 'pl-9'
+                }`}
+              >
+                <NavLink
+                  to="/accounts-salary/paid-history"
+                  className={({ isActive }) =>
+                    `flex rounded-md transition-all text-xs ${
+                      isCollapsed
+                        ? 'justify-center p-2'
+                        : 'items-center gap-2 py-1.5 px-2'
+                    } ${
+                      isActive
+                        ? 'text-emerald-300 bg-slate-900/60'
+                        : 'text-slate-400 hover:text-emerald-300'
+                    }`
+                  }
+                >
+                  <CheckCircle size={16} />
+                  {!isCollapsed && <span>Paid History</span>}
+                </NavLink>
+              </div>
+            )}
+          </div>
         </nav>
       </div>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-        <header className="ars-header-shell h-16 flex items-center justify-between gap-3 px-4 md:px-5 shrink-0 z-20">
+        <header className="ars-header-shell h-14 md:h-16 flex items-center justify-between gap-2 px-3 md:px-5 shrink-0 z-20">
           <div className="flex min-w-0 items-center gap-3">
-            <h2 className="truncate text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">
+            <button
+              onClick={() => {
+                navigate('/');
+                closeMobileMenu();
+              }}
+              className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-slate-950 text-[10px] font-black text-emerald-300 shadow-sm md:hidden"
+              title="Dashboard"
+            >
+              {companyProfile.logo ? (
+                <img
+                  src={companyProfile.logo}
+                  alt={companyDisplayName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                getCompanyInitials(companyProfile.englishName)
+              )}
+            </button>
+            <h2 className="truncate text-base md:text-2xl font-black text-slate-900 uppercase tracking-tight">
               {dynamicTitle}
             </h2>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-1.5 md:gap-3">
             {location.pathname !== '/' && (
               <div
                 className={`ars-search-pill flex items-center transition-all duration-300 ease-in-out ${
                   isSearchExpanded
-                    ? 'w-52 md:w-80 rounded-full px-3 py-2'
-                    : 'w-10 rounded-full bg-transparent border-transparent shadow-none'
+                    ? 'w-36 rounded-full px-2 py-1.5 sm:w-52 sm:px-3 sm:py-2 md:w-80'
+                    : 'w-auto rounded-full'
                 }`}
               >
                 <button
                   onClick={() => setIsSearchExpanded(true)}
-                  className="text-slate-500 hover:text-emerald-600 focus:outline-none"
+                  className="ars-header-icon text-slate-500 hover:text-emerald-600 focus:outline-none"
+                  title="Search"
                 >
-                  <Search size={21} />
+                  <Search size={18} />
                 </button>
                 {isSearchExpanded && (
                   <input
@@ -816,7 +993,7 @@ export default function Layout() {
               )}
             </button>
 
-            <div className="relative ml-2">
+            <div className="relative ml-0 md:ml-2">
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="flex items-center gap-2 focus:outline-none"
@@ -889,11 +1066,107 @@ export default function Layout() {
         </header>
 
         <main
-          className="ars-main-surface flex-1 overflow-auto flex flex-col relative"
+          className="ars-main-surface flex-1 overflow-auto flex flex-col relative pb-16 md:pb-0"
           onClick={() => setIsProfileMenuOpen(false)}
         >
           <Outlet key={languageMode} context={{ searchTerm: globalSearch }} />
         </main>
+
+        <nav className="ars-mobile-bottom-nav md:hidden">
+          {hasAccess('employees') && (
+            <div className="ars-mobile-nav-item">
+              <button
+                onClick={() => {
+                  navigate('/employees');
+                  closeMobileMenu();
+                }}
+                className={location.pathname.startsWith('/employees') ? 'active' : ''}
+              >
+                <Users size={17} />
+                <span>Employee</span>
+              </button>
+            </div>
+          )}
+          {hasAccess('vehicles') && (
+            <div className="ars-mobile-nav-item">
+              {mobilePopup === 'vehicles' && (
+                <div className="ars-mobile-nav-popup">
+                  <button onClick={() => { navigate('/vehicles/oil'); closeMobileMenu(); }}>Oil</button>
+                  <button onClick={() => { navigate('/vehicles/servicing'); closeMobileMenu(); }}>Servicing</button>
+                  <button onClick={() => { navigate('/vehicles/accidents'); closeMobileMenu(); }}>Accidents</button>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  navigate('/vehicles');
+                  toggleMobilePopup('vehicles');
+                }}
+                className={isVehiclesActive || mobilePopup === 'vehicles' ? 'active' : ''}
+              >
+                <Car size={17} />
+                <span>Vehicle</span>
+              </button>
+            </div>
+          )}
+          {hasAccess('id_manager') && (
+            <div className="ars-mobile-nav-item">
+              <button
+                onClick={() => {
+                  navigate('/id-manager');
+                  closeMobileMenu();
+                }}
+                className={location.pathname.startsWith('/id-manager') ? 'active' : ''}
+              >
+                <UserSquare size={17} />
+                <span>ID</span>
+              </button>
+            </div>
+          )}
+          {hasAccess('transaction') && (
+            <div className="ars-mobile-nav-item">
+              {mobilePopup === 'transaction' && (
+                <div className="ars-mobile-nav-popup">
+                  <button onClick={() => { navigate('/transaction/paid'); closeMobileMenu(); }}>Paid</button>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  navigate('/transaction');
+                  toggleMobilePopup('transaction');
+                }}
+                className={isTransactionActive || mobilePopup === 'transaction' ? 'active' : ''}
+              >
+                <CreditCard size={17} />
+                <span>Txn</span>
+              </button>
+            </div>
+          )}
+          <div className="ars-mobile-nav-item">
+            {mobilePopup === 'reports' && (
+              <div className="ars-mobile-nav-popup">
+                <button onClick={() => { navigate('/progress-report/daily-report'); closeMobileMenu(); }}>Daily</button>
+                <button onClick={() => { navigate('/progress-report/monthly-report'); closeMobileMenu(); }}>Monthly</button>
+                <button onClick={() => { navigate('/accounts-salary/paid-history'); closeMobileMenu(); }}>Paid</button>
+              </div>
+            )}
+            <button
+              onClick={() => {
+                navigate('/progress-report/daily-report');
+                toggleMobilePopup('reports');
+              }}
+              className={
+                isProgressReportActive ||
+                isAccountsSalaryActive ||
+                mobilePopup === 'reports'
+                  ? 'active'
+                  : ''
+              }
+            >
+              <ChartColumn size={17} />
+              <span>Report</span>
+            </button>
+          </div>
+        </nav>
       </div>
 
       {/* Notification Drawer */}

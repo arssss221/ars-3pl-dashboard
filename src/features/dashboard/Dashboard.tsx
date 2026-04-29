@@ -73,32 +73,32 @@ export default function Dashboard() {
   const totalUrgentIssues = data.iqamaUrgent + data.vehicleRisks + data.openAccidents;
 
   return (
-    <div className="min-h-full bg-slate-50/50 p-4 md:p-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="min-h-full bg-slate-50/50 p-2.5 sm:p-4 md:p-8">
+      <div className="mx-auto max-w-7xl space-y-3 sm:space-y-5 md:space-y-6">
         
         {/* Header Section */}
-        <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <header className="flex flex-col gap-2.5 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-emerald-100 text-emerald-600">
+            <div className="mb-1.5 flex items-center gap-2 md:mb-2">
+              <span className="hidden h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 sm:flex">
                 <LayoutDashboard size={18} />
               </span>
-              <p className="text-sm font-semibold text-emerald-600 tracking-wide uppercase">Overview</p>
+              <p className="text-[11px] font-black uppercase text-emerald-600 sm:text-sm">Overview</p>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">Command Center</h1>
-            <p className="mt-1 text-sm text-slate-500">Real-time metrics for your fleet, team, and financials.</p>
+            <h1 className="text-xl font-black text-slate-900 sm:text-2xl md:text-3xl">Command Center</h1>
+            <p className="mt-0.5 text-xs font-medium text-slate-500 sm:mt-1 sm:text-sm">Real-time metrics for your fleet, team, and financials.</p>
           </div>
           
-          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
-            <div className={`h-2.5 w-2.5 rounded-full ${totalUrgentIssues > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-            <span className="text-sm font-medium text-slate-700">
+          <div className="flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm sm:w-auto sm:gap-3 sm:px-4">
+            <div className={`h-2 w-2 rounded-full sm:h-2.5 sm:w-2.5 ${totalUrgentIssues > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></div>
+            <span className="truncate text-xs font-bold text-slate-700 sm:text-sm">
               {totalUrgentIssues > 0 ? `${totalUrgentIssues} action(s) required` : 'All systems operational'}
             </span>
           </div>
         </header>
 
         {/* Top KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 md:gap-4">
           <KpiCard 
             title="Total Employees" 
             value={data.totalEmployees} 
@@ -158,23 +158,23 @@ export default function Dashboard() {
         </div>
 
         {/* Main Content Layout */}
-        <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+        <div className="grid gap-3 sm:gap-5 lg:grid-cols-[1.5fr_1fr] lg:gap-6">
           
           {/* Left Column: Operational Status */}
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-5 md:space-y-6">
             
             {/* Fleet Status Panel */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Gauge size={20} className="text-sky-500" /> Fleet Readiness
+            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-2xl sm:p-5 md:p-6">
+              <div className="mb-3 flex items-center justify-between sm:mb-5 md:mb-6">
+                <h2 className="flex items-center gap-2 text-sm font-black text-slate-900 sm:text-lg">
+                  <Gauge size={18} className="hidden text-sky-500 sm:block" /> Fleet Readiness
                 </h2>
-                <button onClick={() => navigate('/vehicles')} className="text-sm font-semibold text-sky-600 hover:text-sky-700 flex items-center gap-1">
+                <button onClick={() => navigate('/vehicles')} className="flex items-center gap-1 text-xs font-black text-sky-600 hover:text-sky-700 sm:text-sm">
                   View All <ArrowRight size={16} />
                 </button>
               </div>
               
-              <div className="space-y-5">
+              <div className="space-y-3 sm:space-y-5">
                 <ProgressBar 
                   label="On Duty" 
                   value={data.workingVehicles} 
@@ -197,26 +197,26 @@ export default function Dashboard() {
             </div>
 
             {/* Employee Status Panel */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Users size={20} className="text-emerald-500" /> Workforce Status
+            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-2xl sm:p-5 md:p-6">
+              <div className="mb-3 flex items-center justify-between sm:mb-5 md:mb-6">
+                <h2 className="flex items-center gap-2 text-sm font-black text-slate-900 sm:text-lg">
+                  <Users size={18} className="hidden text-emerald-500 sm:block" /> Workforce Status
                 </h2>
-                <button onClick={() => navigate('/employees')} className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+                <button onClick={() => navigate('/employees')} className="flex items-center gap-1 text-xs font-black text-emerald-600 hover:text-emerald-700 sm:text-sm">
                   View All <ArrowRight size={16} />
                 </button>
               </div>
               
               <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                <div className="flex flex-col items-center justify-center text-center rounded-xl bg-emerald-50 p-3 sm:p-4 border border-emerald-100">
+                <div className="flex flex-col items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50 p-2 text-center sm:rounded-xl sm:p-4">
                   <p className="text-[10px] sm:text-xs font-semibold text-emerald-600 uppercase tracking-wide leading-tight">Active</p>
                   <p className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold text-emerald-900">{data.workingRiders}</p>
                 </div>
-                <div className="flex flex-col items-center justify-center text-center rounded-xl bg-slate-50 p-3 sm:p-4 border border-slate-200">
+                <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-2 text-center sm:rounded-xl sm:p-4">
                   <p className="text-[10px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wide leading-tight">On Leave</p>
                   <p className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold text-slate-900">{data.leaveRiders}</p>
                 </div>
-                <div className="flex flex-col items-center justify-center text-center rounded-xl bg-amber-50 p-3 sm:p-4 border border-amber-100">
+                <div className="flex flex-col items-center justify-center rounded-lg border border-amber-100 bg-amber-50 p-2 text-center sm:rounded-xl sm:p-4">
                   <p className="text-[10px] sm:text-xs font-semibold text-amber-600 uppercase tracking-wide leading-tight">Missing Docs</p>
                   <p className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold text-amber-900">{data.incompletePapers}</p>
                 </div>
@@ -226,20 +226,20 @@ export default function Dashboard() {
           </div>
 
           {/* Right Column: Urgent Action Items & Quick Links */}
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-5 md:space-y-6">
             
             {/* Urgent Alerts Panel */}
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col h-full">
-              <div className="border-b border-slate-100 bg-slate-50 p-5">
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <AlertTriangle size={20} className="text-amber-500" /> Action Required
+            <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:rounded-2xl">
+              <div className="border-b border-slate-100 bg-slate-50 p-3 sm:p-5">
+                <h2 className="flex items-center gap-2 text-sm font-black text-slate-900 sm:text-lg">
+                  <AlertTriangle size={18} className="hidden text-amber-500 sm:block" /> Action Required
                 </h2>
-                <p className="text-sm text-slate-500 mt-1">Issues needing immediate resolution.</p>
+                <p className="mt-0.5 text-xs font-medium text-slate-500 sm:mt-1 sm:text-sm">Issues needing immediate resolution.</p>
               </div>
               
               <div className="p-2 flex-1 flex flex-col gap-1 overflow-y-auto">
                 {totalUrgentIssues === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500">
+                  <div className="flex flex-1 flex-col items-center justify-center p-5 text-center text-slate-500 sm:p-8">
                     <CheckCircle2 size={40} className="text-emerald-400 mb-3" />
                     <p className="font-semibold text-slate-900">All Caught Up</p>
                     <p className="text-sm mt-1">No urgent issues to display.</p>
@@ -311,14 +311,14 @@ function KpiCard({ title, value, subtitle, icon, tone }: { title: string, value:
   }[tone];
 
   return (
-    <div className="flex flex-col items-center justify-center text-center rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 md:p-6 shadow-sm transition hover:shadow-md">
+    <div className="flex min-h-[5.9rem] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-center shadow-sm transition hover:shadow-md sm:min-h-[8rem] sm:rounded-2xl sm:p-4 md:p-6">
       <div className={`hidden sm:flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl border ${styles} mb-2 sm:mb-3 md:mb-4 shadow-sm`}>
         {icon}
       </div>
       <div>
-        <p className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight line-clamp-1">{title}</p>
-        <p className="mt-0.5 sm:mt-1 md:mt-2 text-xl sm:text-2xl md:text-3xl font-black text-slate-900">{value}</p>
-        <p className="mt-0.5 sm:mt-1 text-[9px] sm:text-[10px] md:text-xs font-semibold text-slate-400 leading-tight line-clamp-1">{subtitle}</p>
+        <p className="line-clamp-1 text-[9px] font-black uppercase leading-tight text-slate-500 sm:text-[10px] md:text-xs">{title}</p>
+        <p className="mt-0.5 text-lg font-black text-slate-900 sm:mt-1 sm:text-2xl md:mt-2 md:text-3xl">{value}</p>
+        <p className="mt-0.5 line-clamp-1 text-[8px] font-semibold leading-tight text-slate-400 sm:mt-1 sm:text-[10px] md:text-xs">{subtitle}</p>
       </div>
     </div>
   );
@@ -335,11 +335,11 @@ function ProgressBar({ label, value, total, tone }: { label: string, value: numb
 
   return (
     <div>
-      <div className="flex items-center justify-between text-sm mb-2">
-        <span className="font-semibold text-slate-700">{label}</span>
-        <span className="font-bold text-slate-900">{value} <span className="text-slate-400 font-medium">/ {total}</span></span>
+      <div className="mb-1.5 flex items-center justify-between text-xs sm:mb-2 sm:text-sm">
+        <span className="font-bold text-slate-700">{label}</span>
+        <span className="font-black text-slate-900">{value} <span className="font-medium text-slate-400">/ {total}</span></span>
       </div>
-      <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 sm:h-2.5">
         <div className={`h-full ${barColor} rounded-full`} style={{ width: `${percentage}%` }}></div>
       </div>
     </div>
@@ -354,8 +354,8 @@ function AlertItem({ icon, title, description, actionText, onClick, tone }: { ic
   }[tone];
 
   return (
-    <div className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 transition">
-      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconColor}`}>
+    <div className="flex items-start gap-2 rounded-xl p-2.5 transition hover:bg-slate-50 sm:gap-4 sm:p-3">
+      <div className={`hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg sm:flex ${iconColor}`}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
@@ -364,7 +364,7 @@ function AlertItem({ icon, title, description, actionText, onClick, tone }: { ic
       </div>
       <button 
         onClick={onClick}
-        className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-sm transition"
+        className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-black text-slate-700 shadow-sm transition hover:bg-slate-50 sm:px-3 sm:text-xs"
       >
         {actionText}
       </button>

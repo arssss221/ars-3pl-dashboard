@@ -270,7 +270,7 @@ export default function Vehicles() {
 
   return (
     <div className="ars-page h-full flex flex-col">
-      <div className="sticky top-0 z-10 px-3 py-3 md:px-4">
+      <div className="sticky top-0 z-10 px-2.5 py-2.5 md:px-4 md:py-3">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide ars-toolbar-dock">
             <button
@@ -299,15 +299,15 @@ export default function Vehicles() {
             ))}
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <button className="ars-primary-button rounded-xl px-3.5 py-2 text-sm font-black flex items-center gap-1.5">
-              <Plus size={16} /> Add
+          <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            <button className="ars-primary-button flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black sm:px-3.5 sm:text-sm">
+              <Plus size={15} className="sm:h-4 sm:w-4" /> Add
             </button>
 
             <div className="relative">
               <button
                 onClick={() => setOpenSort((prev) => !prev)}
-                className="ars-glass-button rounded-xl px-3.5 py-2 text-sm font-black flex items-center gap-1.5 hover:text-emerald-700"
+                className="ars-glass-button flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black hover:text-emerald-700 sm:px-3.5 sm:text-sm"
               >
                 <ArrowUpDown size={14} /> Sort
               </button>
@@ -336,8 +336,8 @@ export default function Vehicles() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto px-3 pb-4 md:px-4">
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(330px,1fr))] gap-3">
+      <div className="flex-1 overflow-auto px-2.5 pb-4 md:px-4">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-[repeat(auto-fit,minmax(330px,1fr))] sm:gap-3">
           {filteredAndSorted.map((vehicle: VehicleSeed) => {
             const nextOilChange = vehicle.mileage + vehicle.oilChangeInterval;
             const isWorking = vehicle.status === 'Working';
@@ -349,10 +349,10 @@ export default function Vehicles() {
               <div
                 key={vehicle.id}
                 onClick={() => navigate(`/vehicles/${vehicle.id}`)}
-                className={`ars-list-card p-3 cursor-pointer relative ${statusCardAura[vehicle.status]}`}
+                className={`ars-list-card cursor-pointer p-2.5 sm:p-3 relative ${statusCardAura[vehicle.status]}`}
               >
                 <div className="flex items-start gap-2">
-                  <div className="h-10 w-10 rounded-full bg-slate-900 flex items-center justify-center text-emerald-300 shadow-sm shrink-0">
+                  <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-emerald-300 shadow-sm sm:flex">
                     <Car size={18} />
                   </div>
 
@@ -379,7 +379,7 @@ export default function Vehicles() {
                         e
                       )
                     }
-                    className={`max-w-[96px] rounded-full border px-2 py-1 text-[10px] font-bold outline-none ${statusStyles[vehicle.status]}`}
+                    className={`max-w-[88px] rounded-full border px-2 py-1 text-[9px] font-bold outline-none sm:max-w-[96px] sm:text-[10px] ${statusStyles[vehicle.status]}`}
                   >
                     {statusFilters.map((status) => (
                       <option key={status} value={status}>
@@ -389,7 +389,7 @@ export default function Vehicles() {
                   </select>
                 </div>
 
-                <div className="mt-2 grid grid-cols-2 gap-2">
+                <div className="mt-2 grid grid-cols-2 gap-1.5 sm:gap-2">
                   <div
                     className={`group/fuel rounded-xl border px-2.5 py-2 ${fuelStyles[vehicle.fuelAllowanceStatus]}`}
                   >
@@ -515,6 +515,41 @@ export default function Vehicles() {
             <p className="text-slate-400 text-sm">No vehicles found</p>
           </div>
         )}
+      </div>
+
+      <div className="ars-mobile-fab-group sm:hidden">
+        {openSort && (
+          <div className="ars-floating-menu w-48 rounded-2xl border border-slate-100 py-1 shadow-lg">
+            {sortOptions.map((option) => (
+              <button
+                key={option.key}
+                onClick={() => {
+                  setSortBy(option.key);
+                  setOpenSort(false);
+                }}
+                className={`w-full px-3 py-2 text-left text-xs ${
+                  sortBy === option.key
+                    ? 'font-black text-emerald-700'
+                    : 'font-semibold text-slate-600'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <button
+          onClick={() => setOpenSort((prev) => !prev)}
+          className="ars-mobile-fab ars-mobile-fab-secondary"
+          aria-label="Sort vehicles"
+        >
+          <ArrowUpDown size={16} />
+          Sort
+        </button>
+        <button className="ars-mobile-fab" aria-label="Add vehicle">
+          <Plus size={17} />
+          Add
+        </button>
       </div>
     </div>
   );

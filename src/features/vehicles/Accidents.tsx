@@ -355,7 +355,7 @@ export default function Accidents() {
 
   return (
     <div className="h-full overflow-auto p-4">
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 hidden justify-end sm:flex">
         <button
           onClick={() => setIsDrawerOpen(true)}
           className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm hover:bg-emerald-700"
@@ -539,6 +539,17 @@ export default function Accidents() {
           <p className="text-sm text-slate-400">No accident records found</p>
         </div>
       )}
+
+      <div className="ars-mobile-fab-group sm:hidden">
+        <button
+          onClick={() => setIsDrawerOpen(true)}
+          className="ars-mobile-fab"
+          aria-label="Report accident"
+        >
+          <Plus size={17} />
+          Accident
+        </button>
+      </div>
 
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/20 backdrop-blur-[1px]">

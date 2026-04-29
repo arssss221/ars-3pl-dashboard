@@ -272,7 +272,7 @@ export default function IDManager() {
           ))}
         </div>
 
-        <div className="flex shrink-0 items-center justify-end gap-2">
+        <div className="hidden shrink-0 items-center justify-end gap-2 sm:flex">
           <select
             value={platformFilter}
             onChange={(e) => setPlatformFilter(e.target.value)}
@@ -294,7 +294,7 @@ export default function IDManager() {
         </div>
       </div>
 
-      <div className="ars-table-shell">
+      <div className="ars-table-shell hidden sm:block">
         <div className="overflow-x-auto">
           <table className="w-full table-fixed text-sm">
             <thead className="ars-table-head border-b border-slate-100">
@@ -417,6 +417,99 @@ export default function IDManager() {
 
         {filteredRecords.length === 0 && (
           <div className="py-12 text-center">
+            <p className="text-sm text-slate-400">No ID records found</p>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-2 sm:hidden">
+        {filteredRecords.map((record, index) => {
+          const displayStatus = getDisplayStatus(record);
+          const isExpired = displayStatus === 'Expired';
+          const ownerSeed = getOwnerSeed(record.owner);
+          const selfieUrl = ownerSeed ? getSelfieUrl(ownerSeed) : null;
+
+          return (
+            <div key={record.id} className="ars-list-card p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black uppercase text-slate-400">
+                    {index + 1}. {record.platform}
+                  </p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <p className="truncate text-sm font-black text-slate-900">
+                      {record.idNumber}
+                    </p>
+                    <button
+                      onClick={() => copyIdNumber(record.id, record.idNumber)}
+                      className="rounded-full bg-slate-100 p-1 text-slate-500"
+                      title="Copy ID number"
+                    >
+                      {copiedId === record.id ? <Check size={12} /> : <Copy size={12} />}
+                    </button>
+                  </div>
+                </div>
+                {isExpired ? (
+                  <span className={`rounded-full px-2 py-1 text-[10px] font-black ${statusStyles.Expired}`}>
+                    Expired
+                  </span>
+                ) : (
+                  <select
+                    value={record.idStatus}
+                    onChange={(e) =>
+                      updateRecord(record.id, {
+                        idStatus: e.target.value as EditableStatus,
+                      })
+                    }
+                    className={`rounded-full border-none px-2 py-1 text-[10px] font-black outline-none ${statusStyles[record.idStatus]}`}
+                  >
+                    {editableStatusOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  {selfieUrl ? (
+                    <img
+                      src={selfieUrl}
+                      alt={getOwnerDisplayName(record.owner)}
+                      className="h-8 w-8 shrink-0 rounded-full border border-emerald-200 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-black text-emerald-700">
+                      {ownerSeed
+                        ? getEmployeeInitials(ownerSeed, i18n.language)
+                        : 'ID'}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-bold text-slate-700">
+                      {getOwnerDisplayName(record.owner)}
+                    </p>
+                    <p className="truncate text-[10px] font-semibold text-slate-400">
+                      {record.phoneNumber}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedRecordId(record.id)}
+                  className="rounded-full bg-slate-100 p-2 text-slate-500"
+                  title="View details"
+                >
+                  <Eye size={14} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+
+        {filteredRecords.length === 0 && (
+          <div className="ars-card rounded-2xl py-8 text-center">
             <p className="text-sm text-slate-400">No ID records found</p>
           </div>
         )}
@@ -699,6 +792,30 @@ export default function IDManager() {
           <option key={value} value={value} />
         ))}
       </datalist>
+
+      <div className="ars-mobile-fab-group sm:hidden">
+        <select
+          value={platformFilter}
+          onChange={(e) => setPlatformFilter(e.target.value)}
+          className="ars-mobile-fab-select"
+          aria-label="Filter platform"
+        >
+          <option value="All">Platform</option>
+          {platformOptions.map((platform) => (
+            <option key={platform} value={platform}>
+              {platform}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={() => setIsDrawerOpen(true)}
+          className="ars-mobile-fab"
+          aria-label="Add ID"
+        >
+          <Plus size={17} />
+          Add ID
+        </button>
+      </div>
     </div>
   );
 }
