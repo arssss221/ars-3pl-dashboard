@@ -154,8 +154,9 @@ export default function Layout() {
       return translateTerm('Progress Report', language);
     }
     if (segments[0] === 'accounts-salary') {
+      if (last === 'salary-sheet') return translateTerm('Salary Sheet', language);
       if (last === 'paid-history') return translateTerm('Paid History', language);
-      return translateTerm('Accounts and Salary', language);
+      return translateTerm('Salary Sheet', language);
     }
     if (last === 'id-manager') return translateTerm('ID Manager', language);
     if (last === 'profile') return translateTerm('Company Profile', language);
@@ -173,6 +174,7 @@ export default function Layout() {
   const [mobilePopup, setMobilePopup] = useState<
     'vehicles' | 'transaction' | 'reports' | null
   >(null);
+  const [popupTimerId, setPopupTimerId] = useState<NodeJS.Timeout | null>(null);
   const [themeMode, setThemeMode] = useState<ThemeMode>(() =>
     localStorage.getItem('ars-theme') === 'dark' ? 'dark' : 'light'
   );
@@ -190,6 +192,9 @@ export default function Layout() {
     }
   );
   const [globalSearch, setGlobalSearch] = useState('');
+  const [pendingSalarySheetRaw, setPendingSalarySheetRaw] = useState(() =>
+    localStorage.getItem('ars-pending-salary-sheet')
+  );
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [dynamicTitle, setDynamicTitle] = useState(() =>
@@ -225,6 +230,23 @@ export default function Layout() {
       JSON.stringify(readNotificationIds)
     );
   }, [readNotificationIds]);
+
+  useEffect(() => {
+    const syncPendingSalarySheet = () =>
+      setPendingSalarySheetRaw(localStorage.getItem('ars-pending-salary-sheet'));
+    window.addEventListener('storage', syncPendingSalarySheet);
+    window.addEventListener(
+      'ars-pending-salary-sheet-updated',
+      syncPendingSalarySheet
+    );
+    return () => {
+      window.removeEventListener('storage', syncPendingSalarySheet);
+      window.removeEventListener(
+        'ars-pending-salary-sheet-updated',
+        syncPendingSalarySheet
+      );
+    };
+  }, []);
 
   useEffect(() => {
     const syncCompanyProfile = () => setCompanyProfile(loadCompanyProfile());
@@ -298,10 +320,26 @@ export default function Layout() {
   const isTransactionActive = location.pathname.startsWith('/transaction');
   const isProgressReportActive = location.pathname.startsWith('/progress-report');
   const isAccountsSalaryActive = location.pathname.startsWith('/accounts-salary');
-  const closeMobileMenu = () => setMobilePopup(null);
+  const closeMobileMenu = () => {
+    setMobilePopup(null);
+    if (popupTimerId) clearTimeout(popupTimerId);
+    setPopupTimerId(null);
+  };
   const toggleMobilePopup = (
     menu: 'vehicles' | 'transaction' | 'reports'
-  ) => setMobilePopup((prev) => (prev === menu ? null : menu));
+  ) => {
+    if (mobilePopup === menu) {
+      closeMobileMenu();
+    } else {
+      if (popupTimerId) clearTimeout(popupTimerId);
+      setMobilePopup(menu);
+      const timer = setTimeout(() => {
+        setMobilePopup(null);
+        setPopupTimerId(null);
+      }, 3000);
+      setPopupTimerId(timer);
+    }
+  };
   const notificationSummary = {
     paperRisks: employeeSeeds.filter(
       (employee) =>
@@ -325,7 +363,31 @@ export default function Layout() {
     paymentDue: 1930,
     serviceQueue: 5,
   };
+  const pendingSalarySheet = pendingSalarySheetRaw
+    ? (() => {
+        try {
+          return JSON.parse(pendingSalarySheetRaw) as { reportTitle?: string };
+        } catch {
+          return null;
+        }
+      })()
+    : null;
+  const dailyNotificationDate = new Date().toISOString().slice(0, 10);
   const notificationMessages: AppNotification[] = [
+    pendingSalarySheet
+      ? {
+          id: `pending-salary-sheet-${dailyNotificationDate}`,
+          title: translateTerm('Pending salary sheet', languageMode),
+          message: translateTerm(
+            'A pending salary sheet exists. Please confirm whether it has been paid, then save it to Paid History with the hard-copy images.',
+            languageMode
+          ),
+          time: pendingSalarySheet.reportTitle || 'Salary',
+          path: '/accounts-salary/salary-sheet',
+          tone: 'amber',
+          icon: <HandCoins size={18} />,
+        }
+      : null,
     notificationSummary.paperRisks > 0
       ? {
           id: 'paper-risk',
@@ -473,6 +535,28 @@ export default function Layout() {
     location.pathname,
     openSubmenu,
   ]);
+
+  useEffect(() => {
+    return () => {
+      if (popupTimerId) clearTimeout(popupTimerId);
+    };
+  }, [popupTimerId]);
+
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const mobileNav = document.querySelector('.ars-mobile-bottom-nav');
+      
+      if (mobileNav && !mobileNav.contains(target) && mobilePopup) {
+        closeMobileMenu();
+      }
+    };
+    
+    if (mobilePopup) {
+      document.addEventListener('click', handleGlobalClick);
+      return () => document.removeEventListener('click', handleGlobalClick);
+    }
+  }, [mobilePopup]);
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -833,7 +917,7 @@ export default function Layout() {
           >
             <button
               onClick={() => {
-                navigate('/accounts-salary');
+                navigate('/accounts-salary/salary-sheet');
                 setOpenSubmenu('accounts-salary');
               }}
               className={`w-full flex rounded-2xl font-black transition-all ${
@@ -853,7 +937,7 @@ export default function Layout() {
               >
                 <HandCoins size={18} />
                 {!isCollapsed && (
-                  <span className="text-sm">Accounts and Salary</span>
+                  <span className="text-sm">Salary Sheet</span>
                 )}
               </div>
               {!isCollapsed && (
@@ -1088,12 +1172,14 @@ export default function Layout() {
             </div>
           )}
           {hasAccess('vehicles') && (
-            <div className="ars-mobile-nav-item">
+            <div className="ars-mobile-nav-item relative">
               {mobilePopup === 'vehicles' && (
-                <div className="ars-mobile-nav-popup">
-                  <button onClick={() => { navigate('/vehicles/oil'); closeMobileMenu(); }}>Oil</button>
-                  <button onClick={() => { navigate('/vehicles/servicing'); closeMobileMenu(); }}>Servicing</button>
-                  <button onClick={() => { navigate('/vehicles/accidents'); closeMobileMenu(); }}>Accidents</button>
+                <div
+                  className="ars-mobile-nav-popup absolute bottom-full mb-2 left-0 right-0 z-40 bg-white rounded-lg shadow-2xl border border-slate-200"
+                >
+                  <button onClick={() => { navigate('/vehicles/oil'); closeMobileMenu(); }} className="w-full px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border-b border-slate-100 last:border-b-0 transition-colors">Oil Changes</button>
+                  <button onClick={() => { navigate('/vehicles/servicing'); closeMobileMenu(); }} className="w-full px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border-b border-slate-100 last:border-b-0 transition-colors">Servicing</button>
+                  <button onClick={() => { navigate('/vehicles/accidents'); closeMobileMenu(); }} className="w-full px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border-b border-slate-100 last:border-b-0 transition-colors">Accidents</button>
                 </div>
               )}
               <button
@@ -1123,10 +1209,12 @@ export default function Layout() {
             </div>
           )}
           {hasAccess('transaction') && (
-            <div className="ars-mobile-nav-item">
+            <div className="ars-mobile-nav-item relative">
               {mobilePopup === 'transaction' && (
-                <div className="ars-mobile-nav-popup">
-                  <button onClick={() => { navigate('/transaction/paid'); closeMobileMenu(); }}>Paid</button>
+                <div
+                  className="ars-mobile-nav-popup absolute bottom-full mb-2 left-0 right-0 z-40 bg-white rounded-lg shadow-2xl border border-slate-200"
+                >
+                  <button onClick={() => { navigate('/transaction/paid'); closeMobileMenu(); }} className="w-full px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border-b border-slate-100 last:border-b-0 transition-colors">Paid Transactions</button>
                 </div>
               )}
               <button
@@ -1141,17 +1229,18 @@ export default function Layout() {
               </button>
             </div>
           )}
-          <div className="ars-mobile-nav-item">
+          <div className="ars-mobile-nav-item relative">
             {mobilePopup === 'reports' && (
-              <div className="ars-mobile-nav-popup">
-                <button onClick={() => { navigate('/progress-report/daily-report'); closeMobileMenu(); }}>Daily</button>
-                <button onClick={() => { navigate('/progress-report/monthly-report'); closeMobileMenu(); }}>Monthly</button>
-                <button onClick={() => { navigate('/accounts-salary/paid-history'); closeMobileMenu(); }}>Paid</button>
+              <div
+                className="ars-mobile-nav-popup absolute bottom-full mb-2 left-0 right-0 z-40 bg-white rounded-lg shadow-2xl border border-slate-200"
+              >
+                <button onClick={() => { navigate('/progress-report/daily-report'); closeMobileMenu(); }} className="w-full px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border-b border-slate-100 last:border-b-0 transition-colors">Daily Report</button>
+                <button onClick={() => { navigate('/progress-report/monthly-report'); closeMobileMenu(); }} className="w-full px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border-b border-slate-100 last:border-b-0 transition-colors">Monthly Report</button>
               </div>
             )}
             <button
               onClick={() => {
-                navigate('/progress-report/daily-report');
+                navigate('/progress-report');
                 toggleMobilePopup('reports');
               }}
               className={

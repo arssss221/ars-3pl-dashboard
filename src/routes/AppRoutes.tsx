@@ -14,11 +14,13 @@ import Employees from '../features/employees/Employees';
 import Transaction from '../features/transactions/Transaction';
 import PaidTransactions from '../features/transactions/PaidTransactions';
 import IDManager from '../features/id_manager/IDManager';
+import ProgressReport from '../features/progress_report/ProgressReport';
 import DailyReport from '../features/progress_report/DailyReport';
 import MonthlyReport from '../features/progress_report/MonthlyReport';
+import SalarySheet from '../features/accounts_salary/SalarySheet';
 import PaidHistory from '../features/accounts_salary/PaidHistory';
 
-// --- Profile & Settings (আপনার নতুন পাথ অনুযায়ী) ---
+// --- Profile & Settings ---
 import Profile from '../features/profile/Profile';
 import Permissions from '../features/profile/Permissions';
 import Settings from '../features/profile/Settings';
@@ -99,14 +101,14 @@ export default function AppRoutes() {
         />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
-        {/* মেইন ড্যাশবোর্ড লেআউট */}
+        {/* Main dashboard layout */}
         <Route
           path="/"
           element={user ? <Layout /> : <Navigate to="/login" replace />}
         >
           <Route index element={<Dashboard />} />
 
-          {/* প্রোফাইল এবং সেটিংস রাউটগুলো */}
+          {/* Profile and settings routes */}
           <Route path="profile" element={<Profile />} />
           <Route path="permissions" element={<Permissions />} />
           <Route path="settings" element={<Settings />} />
@@ -142,13 +144,14 @@ export default function AppRoutes() {
           </Route>
 
           <Route path="progress-report">
-            <Route index element={<Navigate to="daily-report" replace />} />
+            <Route index element={<ProgressReport />} />
             <Route path="daily-report" element={<DailyReport />} />
             <Route path="monthly-report" element={<MonthlyReport />} />
           </Route>
 
           <Route path="accounts-salary">
-            <Route index element={<Navigate to="paid-history" replace />} />
+            <Route index element={<Navigate to="salary-sheet" replace />} />
+            <Route path="salary-sheet" element={<SalarySheet />} />
             <Route path="paid-history" element={<PaidHistory />} />
           </Route>
         </Route>

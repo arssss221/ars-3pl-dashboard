@@ -376,8 +376,8 @@ export default function Transaction() {
   };
 
   return (
-    <div className="ars-page h-full overflow-auto p-3 md:p-4">
-      <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-[repeat(auto-fit,minmax(150px,1fr))] sm:gap-2.5">
+    <div className="ars-page h-full overflow-auto p-2.5 md:p-4">
+      <div className="mb-2 grid grid-cols-4 gap-1.5 sm:mb-3 sm:grid-cols-[repeat(auto-fit,minmax(150px,1fr))] sm:gap-2.5">
         <SummaryCard
           label="Total People"
           value={`${totalPeople}`}
@@ -425,7 +425,127 @@ export default function Transaction() {
         </div>
       </div>
 
-      <div className="ars-table-shell overflow-visible">
+      <div className="space-y-2 sm:hidden">
+        {visibleRiderSummaries.map((rider, index) => {
+          const isExpanded = expandedRider === rider.riderName;
+          const seed = getRiderSeed(rider.riderName);
+          const displayName = seed
+            ? getEmployeeDisplayName(seed, i18n.language)
+            : rider.riderName;
+
+          return (
+            <div key={rider.riderName} className="ars-list-card p-3">
+              <button
+                onClick={() =>
+                  setExpandedRider(isExpanded ? null : rider.riderName)
+                }
+                className="flex w-full items-center gap-2 text-left"
+              >
+                <span className="text-xs font-black text-slate-400">
+                  {index + 1}
+                </span>
+                <RiderAvatar riderName={rider.riderName} language={i18n.language} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-black text-slate-900">
+                    {displayName}
+                  </p>
+                  <p dir="ltr" className="text-[11px] font-bold text-red-600">
+                    Due {rider.balance.toLocaleString()} SAR
+                  </p>
+                </div>
+                <ChevronDown
+                  size={16}
+                  className={`text-slate-400 transition-transform ${
+                    isExpanded ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              <div className="mt-3 grid grid-cols-3 gap-1.5 text-center">
+                <div className="rounded-lg bg-red-50 px-2 py-1.5">
+                  <p className="text-[9px] font-black uppercase text-red-500">
+                    Total
+                  </p>
+                  <p dir="ltr" className="text-xs font-black text-red-700">
+                    {rider.totalDue.toLocaleString()}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-emerald-50 px-2 py-1.5">
+                  <p className="text-[9px] font-black uppercase text-emerald-600">
+                    Paid
+                  </p>
+                  <p dir="ltr" className="text-xs font-black text-emerald-700">
+                    {rider.totalPaid.toLocaleString()}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-50 px-2 py-1.5">
+                  <p className="text-[9px] font-black uppercase text-slate-500">
+                    Balance
+                  </p>
+                  <p dir="ltr" className="text-xs font-black text-slate-800">
+                    {rider.balance.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              {isExpanded && (
+                <div className="mt-2 space-y-1.5">
+                  {rider.unpaidHistory.map((item) => {
+                    const due = getDueAmount(item);
+                    const paid = getPaidAmount(item);
+                    return (
+                      <div
+                        key={item.id}
+                        className="rounded-xl border border-slate-100 bg-white px-2.5 py-2"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-black text-slate-800">
+                              {item.category}
+                            </p>
+                            <p className="text-[10px] font-semibold text-slate-400">
+                              {formatDate(item.date)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openPaymentEditor(item.id, e);
+                            }}
+                            className="rounded-md bg-emerald-50 p-1 text-emerald-700"
+                            title="Add paid amount"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between text-[11px] font-black">
+                          <span dir="ltr" className="text-slate-700">
+                            Bill {item.amount} SAR
+                          </span>
+                          <span dir="ltr" className="text-emerald-600">
+                            Paid {paid} SAR
+                          </span>
+                          <span dir="ltr" className="text-red-600">
+                            Due {due} SAR
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {visibleRiderSummaries.length === 0 && (
+          <div className="ars-card rounded-2xl py-10 text-center">
+            <p className="text-sm text-slate-400">No transactions found</p>
+          </div>
+        )}
+      </div>
+
+      <div className="ars-table-shell hidden overflow-visible sm:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="ars-table-head border-b border-slate-100">
@@ -899,12 +1019,12 @@ function SummaryCard({
   }[tone];
 
   return (
-    <div className={`ars-card rounded-full px-3 py-2 sm:rounded-2xl sm:py-3 text-center ${toneClass}`}>
-      <div className="flex items-center justify-center gap-1.5 text-[10px] font-black uppercase sm:gap-2 sm:text-xs sm:tracking-wider">
-        {icon}
+    <div className={`ars-card rounded-xl px-1.5 py-1.5 text-center sm:rounded-2xl sm:px-3 sm:py-3 ${toneClass}`}>
+      <div className="flex items-center justify-center gap-1 text-[8px] font-black uppercase leading-tight sm:gap-2 sm:text-xs sm:tracking-wider">
+        <span className="hidden sm:inline-flex">{icon}</span>
         {label}
       </div>
-      <p dir="ltr" className="mt-0.5 text-sm font-black text-slate-800 sm:mt-1 sm:text-base">
+      <p dir="ltr" className="mt-0.5 text-[11px] font-black leading-tight text-slate-800 sm:mt-1 sm:text-base">
         {value}
       </p>
     </div>
